@@ -1,0 +1,1048 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>詰将棋１００連戦</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Dela+Gothic+One&family=Shippori+Mincho:wght@700;800&family=UnifrakturMaguntia&family=Zen+Kurenaido&display=swap" rel="stylesheet">
+<link href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css" rel="stylesheet">
+<style>
+/* ===== どばがき — Gothic Lolita × ゴリゴリ発色 ===== */
+:root {
+  --pink: #ff1493;
+  --hot: #ff00aa;
+  --violet: #8a2be2;
+  --cyan: #00fff7;
+  --lime: #b6ff00;
+  --gold: #ffd700;
+  --blood: #d10040;
+  --ink: #0b0011;
+  --lace: #fff0fa;
+  --wood: #f3c56b;
+  --wood-dark: #a1631b;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { height: 100%; overflow: hidden; }
+body {
+  font-family: 'Shippori Mincho', 'Zen Kurenaido', serif;
+  color: var(--lace);
+  background:
+    radial-gradient(ellipse at 20% 10%, rgba(255,20,147,.45), transparent 50%),
+    radial-gradient(ellipse at 80% 90%, rgba(138,43,226,.55), transparent 55%),
+    radial-gradient(ellipse at 60% 30%, rgba(0,255,247,.18), transparent 45%),
+    repeating-linear-gradient(45deg, #12001c 0 18px, #1a0026 18px 36px);
+  perspective: 1400px;
+  user-select: none;
+  -webkit-user-select: none;
+}
+button { font-family: inherit; cursor: pointer; }
+[hidden] { display: none !important; }
+
+#fx-canvas { position: fixed; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 50; }
+
+/* レース飾り */
+.lace {
+  position: fixed; left: 0; right: 0; height: 34px; z-index: 40; pointer-events: none;
+  background:
+    radial-gradient(circle at 12px 0, transparent 10px, var(--lace) 11px, var(--lace) 13px, transparent 14px) 0 0/24px 24px repeat-x,
+    linear-gradient(var(--lace), var(--lace)) 0 22px/100% 3px no-repeat,
+    radial-gradient(circle at 12px 34px, var(--pink) 4px, transparent 5px) 0 0/24px 34px repeat-x;
+  filter: drop-shadow(0 0 6px var(--pink));
+}
+#lace-top { top: 0; }
+#lace-bottom { bottom: 0; transform: scaleY(-1); }
+
+.screen { position: fixed; inset: 0; display: none; }
+.screen.active { display: block; }
+
+/* ===== ボタン ===== */
+.goth-btn {
+  position: relative; border: 3px double var(--lace); color: var(--lace);
+  background: linear-gradient(135deg, var(--blood), var(--violet) 60%, var(--hot));
+  font-family: 'Dela Gothic One', sans-serif; letter-spacing: .12em;
+  text-shadow: 0 0 8px #fff, 0 0 18px var(--pink);
+  box-shadow: 0 0 0 4px var(--ink), 0 0 0 6px var(--pink), 0 0 30px var(--hot), inset 0 0 20px rgba(255,255,255,.25);
+  transition: transform .12s, filter .12s;
+  clip-path: polygon(6% 0, 94% 0, 100% 30%, 100% 70%, 94% 100%, 6% 100%, 0 70%, 0 30%);
+}
+.goth-btn:hover { transform: scale(1.06) rotate(-1.5deg); filter: brightness(1.3) saturate(1.5); }
+.goth-btn:active { transform: scale(.97); }
+.goth-btn.big { font-size: clamp(22px, 3.4vw, 40px); padding: 18px 54px; animation: btnPulse 1.2s infinite; }
+.goth-btn.small { font-size: 16px; padding: 10px 26px; }
+.goth-btn.tiny { font-size: 12px; padding: 6px 12px; }
+@keyframes btnPulse { 0%,100% { box-shadow: 0 0 0 4px var(--ink), 0 0 0 6px var(--pink), 0 0 30px var(--hot); } 50% { box-shadow: 0 0 0 4px var(--ink), 0 0 0 6px var(--cyan), 0 0 60px var(--cyan), 0 0 90px var(--pink); } }
+
+/* ===== タイトル ===== */
+.title-stage { height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 40px; transform-style: preserve-3d; }
+.title-3d { transform-style: preserve-3d; animation: titleFloat 6s ease-in-out infinite; text-align: center; position: relative; }
+@keyframes titleFloat { 0%,100% { transform: rotateX(18deg) rotateY(-8deg) translateZ(0); } 50% { transform: rotateX(10deg) rotateY(8deg) translateZ(60px); } }
+.title-logo {
+  font-family: 'Dela Gothic One', sans-serif;
+  font-size: clamp(32px, 7vw, 100px); line-height: 1.15; letter-spacing: .02em;
+  color: var(--pink); position: relative; display: inline-block;
+  text-shadow:
+    2px 2px 0 var(--lace), 4px 4px 0 var(--violet), 6px 6px 0 var(--violet), 8px 8px 0 var(--ink),
+    10px 10px 0 var(--cyan), 12px 12px 0 var(--cyan), 14px 14px 0 var(--ink), 16px 16px 0 var(--lime),
+    20px 20px 40px rgba(0,0,0,.8), 0 0 40px var(--hot), 0 0 90px var(--pink);
+  animation: wobble 1.6s ease-in-out infinite;
+  -webkit-text-stroke: 2px var(--ink);
+}
+.title-logo::before { content: attr(data-text); position: absolute; inset: 0; color: var(--cyan); -webkit-text-stroke: 0; text-shadow: none; opacity: 0; animation: glitch 3s infinite; pointer-events: none; }
+@keyframes glitch { 0%,89%,100% { opacity: 0; } 90% { opacity: .9; clip-path: inset(20% 0 40% 0); transform: translateX(-14px); } 93% { opacity: .9; clip-path: inset(60% 0 10% 0); transform: translateX(16px); } 96% { opacity: 0; } }
+@keyframes hueSpin { to { filter: hue-rotate(360deg); } }
+@keyframes wobble { 0%,100% { transform: rotate(-2deg) scale(1); } 50% { transform: rotate(2deg) scale(1.04); } }
+.title-rose { position: absolute; top: -20px; font-size: clamp(40px, 8vw, 110px); filter: drop-shadow(0 0 20px var(--pink)); animation: spinRose 5s linear infinite; }
+.title-rose svg { width: 1em; height: 1em; }
+.title-rose-l { left: -1.2em; } .title-rose-r { right: -1.2em; animation-direction: reverse; }
+@keyframes spinRose { to { transform: rotate(360deg); } }
+.title-sub { font-family: 'Shippori Mincho', serif; font-weight: 800; font-size: clamp(22px, 4vw, 48px); margin-top: 24px; color: var(--lace); text-shadow: 0 0 10px var(--cyan), 0 0 30px var(--violet); letter-spacing: .3em; }
+.title-sub .hundred { font-family: 'Dela Gothic One'; color: var(--gold); font-size: 1.4em; text-shadow: 0 0 12px var(--gold), 4px 4px 0 var(--blood); }
+.title-gothic { font-family: 'UnifrakturMaguntia', cursive; font-size: clamp(18px, 3vw, 34px); color: var(--cyan); text-shadow: 0 0 12px var(--cyan); margin-top: 8px; letter-spacing: .1em; }
+.title-menu { display: flex; flex-direction: column; align-items: center; gap: 16px; }
+.title-hint { font-size: 14px; opacity: .85; text-align: center; line-height: 1.7; text-shadow: 0 0 6px #000; }
+
+/* ===== HUD ===== */
+#play-header {
+  position: fixed; top: 36px; left: 0; right: 0; z-index: 30; padding: 8px 18px;
+  display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap;
+  background: linear-gradient(90deg, rgba(209,0,64,.85), rgba(138,43,226,.85), rgba(0,255,247,.55));
+  border-bottom: 3px double var(--lace); box-shadow: 0 6px 30px rgba(255,20,147,.6);
+}
+.hud-left, .hud-right, .hud-center { display: flex; align-items: center; gap: 8px; }
+.hud-label { font-size: 13px; letter-spacing: .2em; }
+.hud-big { font-family: 'Dela Gothic One'; font-size: 34px; color: var(--gold); text-shadow: 3px 3px 0 var(--blood), 0 0 14px var(--gold); }
+.hud-chip { font-family: 'Dela Gothic One'; font-size: 13px; padding: 4px 12px; border: 2px solid var(--lace); border-radius: 999px; background: var(--ink); box-shadow: 0 0 10px var(--cyan); }
+.hud-chip.pink { box-shadow: 0 0 10px var(--pink); border-color: var(--pink); }
+#tension-wrap { display: flex; align-items: center; gap: 8px; }
+#tension-bar { width: clamp(120px, 24vw, 340px); height: 18px; border: 2px solid var(--lace); background: var(--ink); border-radius: 4px; overflow: hidden; box-shadow: 0 0 12px var(--pink); }
+#tension-fill { height: 100%; width: 0%; background: repeating-linear-gradient(90deg, var(--pink) 0 12px, var(--gold) 12px 24px, var(--cyan) 24px 36px, var(--lime) 36px 48px); background-size: 48px 100%; animation: barMove .4s linear infinite; transition: width .5s cubic-bezier(.2,1.6,.4,1); }
+@keyframes barMove { to { background-position: 48px 0; } }
+#tension-val { font-family: 'Dela Gothic One'; color: var(--gold); text-shadow: 0 0 8px var(--gold); }
+
+/* ===== 3D 盤 ===== */
+#board-stage { position: absolute; inset: 0 150px 0 0; display: flex; align-items: center; justify-content: center; perspective: 1500px; padding-top: 40px; }
+#board-tilt { transform-style: preserve-3d; transform: none; transition: transform .3s ease; }
+#board-tilt.shake { animation: boardShake .5s; }
+@keyframes boardShake { 0%,100% { transform: rotateX(38deg) translate(0,0); } 20% { transform: rotateX(42deg) translate(-14px, 6px) rotateZ(-2deg); } 40% { transform: rotateX(34deg) translate(12px,-8px) rotateZ(2deg); } 60% { transform: rotateX(40deg) translate(-8px, 4px); } 80% { transform: rotateX(36deg) translate(6px,-4px); } }
+#board-3d { display: flex; align-items: flex-end; gap: 26px; transform-style: preserve-3d; }
+#board-wrap { position: relative; transform-style: preserve-3d; }
+#board {
+  --cell: clamp(40px, min(6.6vw, 7.2vh), 70px);
+  display: grid; grid-template-columns: repeat(9, var(--cell)); grid-template-rows: repeat(9, var(--cell));
+  background: linear-gradient(135deg, #ffd36e, var(--wood) 40%, #e9ab45);
+  border: 5px solid var(--ink); position: relative; transform-style: preserve-3d;
+  box-shadow: 0 0 0 6px var(--pink), 0 0 0 12px var(--ink), 0 0 0 15px var(--cyan), 0 0 60px var(--hot), 0 40px 80px rgba(0,0,0,.7);
+}
+.board-side { position: absolute; background: linear-gradient(var(--wood-dark), #5a3208); }
+.board-side-front { left: 0; right: 0; bottom: 0; height: 28px; transform-origin: bottom; transform: rotateX(-90deg) translateY(28px); box-shadow: inset 0 -8px 20px rgba(0,0,0,.5); }
+.board-side-left { top: 0; bottom: 0; left: 0; width: 28px; transform-origin: left; transform: rotateY(90deg) translateX(-28px); }
+.board-legs { position: absolute; inset: 14px; transform: translateZ(-120px); pointer-events: none; }
+.board-legs span { position: absolute; width: 34px; height: 34px; background: radial-gradient(circle, var(--pink), var(--violet)); border: 3px solid var(--ink); border-radius: 50%; box-shadow: 0 0 20px var(--hot); }
+.board-legs span:nth-child(1){left:0;top:0}.board-legs span:nth-child(2){right:0;top:0}.board-legs span:nth-child(3){left:0;bottom:0}.board-legs span:nth-child(4){right:0;bottom:0}
+
+.cell { position: relative; border: 1px solid #3a2002; display: flex; align-items: center; justify-content: center; transform-style: preserve-3d; touch-action: manipulation; }
+.cell.selectable { cursor: pointer; }
+.cell.target { cursor: pointer; background: rgba(0,255,247,.32); box-shadow: inset 0 0 0 3px #008c88, inset 0 0 14px var(--cyan); }
+.cell.target::after { content: ''; position: absolute; width: 42%; height: 42%; border-radius: 50%; background: var(--cyan); box-shadow: 0 0 14px var(--cyan), 0 0 30px var(--pink); animation: targetBlink .5s alternate infinite; pointer-events: none; }
+.cell.target.capture::after { width: 90%; height: 90%; border-radius: 6px; background: transparent; border: 4px dashed var(--pink); }
+.cell.target.capture { background: rgba(255,20,147,.28); box-shadow: inset 0 0 0 3px var(--pink); }
+.cell.selectable:focus-visible, .cell.target:focus-visible { outline: 4px solid #fff; outline-offset: -4px; z-index: 2; }
+@keyframes targetBlink { to { transform: scale(1.3); opacity: .6; } }
+.cell.selected { background: rgba(255,20,147,.5); box-shadow: inset 0 0 20px var(--pink); }
+.cell.last { background: rgba(0,255,247,.35); }
+.cell.check-glow { animation: checkGlow .4s alternate infinite; }
+@keyframes checkGlow { from { background: rgba(255,0,0,.4); } to { background: rgba(255,255,0,.7); } }
+
+.piece {
+  position: relative; width: 84%; height: 88%;
+  display: flex; align-items: center; justify-content: center;
+  font-family: 'Shippori Mincho', serif; font-weight: 800; font-size: calc(var(--cell) * .52);
+  color: #1a0b00; background: linear-gradient(160deg, #fff5d6, #ffd98a 50%, #e8b75a);
+  clip-path: polygon(50% 0, 88% 14%, 100% 100%, 0 100%, 12% 14%);
+  box-shadow: 0 0 0 2px #3a2002, 0 8px 0 #6b3d05;
+  transform: translateZ(10px); transition: transform .25s;
+  text-shadow: 0 0 2px rgba(0,0,0,.2);
+}
+.piece.white { transform: translateZ(10px) rotate(180deg); background: linear-gradient(160deg, #ffe0f4, #ffb1e1 50%, #e37cc0); color: #2a0020; }
+.piece.promoted { color: var(--blood); text-shadow: 0 0 4px var(--pink); }
+.piece.king { background: linear-gradient(160deg, #ffe8a0, var(--gold) 50%, #d4a000); color: var(--ink); }
+.piece.white.king { background: linear-gradient(160deg, #f0d0ff, #c77dff 50%, #8a2be2); color: #fff; text-shadow: 0 0 6px var(--violet); }
+.cell.selectable:hover .piece { transform: translateZ(40px) scale(1.12); filter: brightness(1.15); }
+.piece.slam { animation: slam .35s cubic-bezier(.2,1.5,.5,1); }
+@keyframes slam { 0% { transform: translateZ(260px) scale(1.8) rotate(-15deg); filter: brightness(2); } 70% { transform: translateZ(0) scale(.92); } 100% { transform: translateZ(10px) scale(1); } }
+.piece.white.slam { animation: slamW .35s cubic-bezier(.2,1.5,.5,1); }
+@keyframes slamW { 0% { transform: translateZ(260px) scale(1.8) rotate(165deg); } 70% { transform: translateZ(0) scale(.92) rotate(180deg); } 100% { transform: translateZ(10px) rotate(180deg); } }
+.piece.dying { animation: dying .5s forwards; }
+@keyframes dying { to { transform: translateZ(300px) rotate(720deg) scale(0); opacity: 0; } }
+
+.hand-area { width: calc(var(--cell, 60px) * 1.5); min-height: 240px; background: linear-gradient(#2a0033, #12001c); border: 3px double var(--pink); padding: 8px 6px; box-shadow: 0 0 20px var(--violet); transform: translateZ(6px); }
+.hand-title { font-family: 'Dela Gothic One'; font-size: 13px; text-align: center; color: var(--gold); margin-bottom: 8px; letter-spacing: .2em; }
+.hand-pieces { display: flex; flex-direction: column; align-items: center; gap: 6px; }
+.hand-piece { position: relative; width: calc(var(--cell, 60px) * .85); height: calc(var(--cell, 60px) * .9); display: flex; align-items: center; justify-content: center; cursor: pointer; }
+.hand-piece .piece { width: 100%; height: 100%; font-size: calc(var(--cell, 60px) * .5); }
+.hand-piece .cnt { position: absolute; right: -6px; bottom: -6px; font-family: 'Dela Gothic One'; font-size: 13px; background: var(--pink); color: #fff; border-radius: 50%; width: 22px; height: 22px; display: flex; align-items: center; justify-content: center; border: 2px solid var(--lace); }
+.hand-piece.selected .piece { transform: translateZ(50px) scale(1.15); box-shadow: 0 0 0 3px var(--cyan), 0 0 20px var(--cyan); }
+.hand-piece:hover .piece { transform: translateZ(30px) scale(1.08); }
+#hand-white .hand-piece { cursor: default; opacity: .85; }
+
+/* ===== 棋譜/コールアウト ===== */
+#move-log { position: fixed; left: 14px; bottom: 44px; z-index: 30; font-family: 'Zen Kurenaido'; font-size: 15px; max-width: 34vw; line-height: 1.6; text-shadow: 0 0 6px #000; color: var(--lace); }
+#move-log span { display: inline-block; margin-right: 8px; padding: 0 6px; border-left: 3px solid var(--cyan); }
+#move-log span.w { border-color: var(--pink); }
+
+.callout {
+  position: fixed; left: 50%; top: 45%; transform: translate(-50%, -50%) scale(0); z-index: 60; pointer-events: none;
+  font-family: 'Dela Gothic One'; font-size: clamp(60px, 14vw, 200px); line-height: 1; white-space: nowrap;
+  color: var(--gold); -webkit-text-stroke: 3px var(--ink);
+  text-shadow: 6px 6px 0 var(--blood), 12px 12px 0 var(--violet), 18px 18px 0 var(--cyan), 0 0 40px var(--pink), 0 0 90px #fff;
+}
+.callout.show { animation: calloutIn .9s cubic-bezier(.2,1.6,.4,1) forwards; }
+.callout.mate { font-size: clamp(90px, 22vw, 320px); color: var(--pink); animation: mateIn 1.6s cubic-bezier(.2,1.6,.4,1) forwards; }
+@keyframes calloutIn { 0% { transform: translate(-50%,-50%) scale(0) rotate(-30deg); opacity: 0; } 30% { transform: translate(-50%,-50%) scale(1.3) rotate(4deg); opacity: 1; } 60% { transform: translate(-50%,-50%) scale(1) rotate(-2deg); } 100% { transform: translate(-50%,-60%) scale(1.1); opacity: 0; } }
+@keyframes mateIn { 0% { transform: translate(-50%,-50%) scale(6) rotate(20deg); opacity: 0; filter: blur(20px); } 25% { transform: translate(-50%,-50%) scale(1) rotate(-3deg); opacity: 1; filter: blur(0); } 35% { transform: translate(-50%,-50%) scale(1.15) rotate(2deg); } 85% { transform: translate(-50%,-50%) scale(1.1) rotate(-1deg); opacity: 1; } 100% { transform: translate(-50%,-50%) scale(3); opacity: 0; } }
+.callout.w { color: var(--cyan); font-size: clamp(30px, 6vw, 80px); text-shadow: 4px 4px 0 var(--violet), 0 0 30px var(--cyan); }
+
+.stage-banner { position: fixed; left: -100%; top: 40%; width: 100%; z-index: 60; pointer-events: none; padding: 16px 0; text-align: center; font-family: 'Dela Gothic One'; font-size: clamp(36px, 7vw, 96px); color: #fff; background: linear-gradient(90deg, transparent, var(--blood) 15%, var(--violet) 50%, var(--hot) 85%, transparent); border-top: 4px double var(--lace); border-bottom: 4px double var(--lace); text-shadow: 4px 4px 0 var(--ink), 0 0 30px var(--gold); }
+.stage-banner.show { animation: bannerSlide 1.6s cubic-bezier(.2,1,.3,1) forwards; }
+@keyframes bannerSlide { 0% { left: -100%; } 30% { left: 0; } 70% { left: 0; } 100% { left: 100%; } }
+
+#flash { position: fixed; inset: 0; z-index: 55; pointer-events: none; opacity: 0; background: #fff; }
+#flash.on { animation: flashAnim .5s forwards; }
+@keyframes flashAnim { 0% { opacity: 1; } 100% { opacity: 0; } }
+body.invert { animation: invertAnim .6s; }
+@keyframes invertAnim { 0%,100% { filter: none; } 20% { filter: invert(1) hue-rotate(90deg); } 40% { filter: none; } 60% { filter: invert(1) hue-rotate(180deg) saturate(3); } }
+body.hyper { animation: hyper .7s steps(2) infinite; }
+@keyframes hyper { 0% { filter: hue-rotate(0) saturate(1.4); } 100% { filter: hue-rotate(360deg) saturate(1.4); } }
+
+/* ===== 変なギャラリー ===== */
+#gallery-layer { position: fixed; top: 116px; right: 8px; bottom: 56px; width: min(13vw, 132px); z-index: 20; pointer-events: none; perspective: 900px; display: flex; flex-direction: column; gap: 12px; overflow: hidden; align-items: center; padding: 12px 4px; background: rgba(18,0,28,.75); border: 2px solid var(--pink); border-radius: 18px; box-shadow: inset 0 0 25px var(--violet), 0 0 14px var(--pink); }
+.gal { position: relative; flex: 0 0 74px; width: 68px; display: flex; flex-direction: column; align-items: center; transform-style: preserve-3d; animation: galBob var(--dur, 1.6s) ease-in-out infinite alternate; filter: drop-shadow(0 0 10px var(--pink)); }
+.gal .face { width: 54px; height: 58px; position: relative; transform-style: preserve-3d; transform: rotateY(-18deg) rotateX(8deg); border: 2px solid var(--lace); border-radius: 12px; background: linear-gradient(135deg,#47134e,#1b082d); box-shadow: 7px 5px 0 #4d1760, 10px 8px 0 #16061d, 12px 11px 18px #000; }
+.gal .face svg { width: 100%; height: 100%; transform: translateZ(14px); filter: drop-shadow(0 3px 3px #000); }
+.gal .say { font-family: 'Zen Kurenaido'; font-size: 13px; background: var(--lace); color: var(--ink); padding: 3px 8px; border-radius: 12px; border: 2px solid var(--pink); margin-bottom: 4px; white-space: nowrap; opacity: 0; transform: scale(0); }
+.gal .say.pop { animation: sayPop 2.4s ease forwards; }
+@keyframes sayPop { 0% { opacity: 0; transform: scale(0); } 15% { opacity: 1; transform: scale(1.2); } 25% { transform: scale(1); } 85% { opacity: 1; } 100% { opacity: 0; transform: translateY(-20px); } }
+@keyframes galBob { from { transform: translateY(0) rotate(-8deg) scale(1); } to { transform: translateY(-14px) rotate(8deg) scale(1.08); } }
+.gal.cheer { animation: galCheer .5s ease-in-out 4; }
+@keyframes galCheer { 0%,100% { transform: translateY(0) scale(1); } 50% { transform: translateY(-60px) scale(1.4) rotate(15deg); } }
+.gal .name { font-family: 'Dela Gothic One'; font-size: 10px; color: var(--cyan); text-shadow: 0 0 6px #000; white-space: nowrap; }
+
+/* ===== エンディング ===== */
+.ending-stage { height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 28px; position: relative; overflow: hidden; }
+.ending-3d { text-align: center; transform-style: preserve-3d; animation: endSpin 12s linear infinite; position: relative; z-index: 5; }
+@keyframes endSpin { 0% { transform: rotateY(-15deg) rotateX(10deg); } 50% { transform: rotateY(15deg) rotateX(-6deg); } 100% { transform: rotateY(-15deg) rotateX(10deg); } }
+.ending-logo { font-family: 'Dela Gothic One'; font-size: clamp(70px, 18vw, 240px); line-height: 1; color: var(--gold); -webkit-text-stroke: 3px var(--ink); text-shadow: 4px 4px 0 var(--blood), 8px 8px 0 var(--violet), 12px 12px 0 var(--cyan), 16px 16px 0 var(--lime), 0 0 60px var(--gold), 0 0 120px var(--pink); animation: hueSpin 3s linear infinite, wobble 1.2s ease-in-out infinite; }
+.ending-sub { font-size: clamp(18px, 3vw, 36px); font-weight: 800; letter-spacing: .3em; line-height: 1.8; text-shadow: 0 0 12px var(--cyan); margin-top: 16px; }
+.ending-stats { margin-top: 18px; font-family: 'Dela Gothic One'; font-size: clamp(14px, 2vw, 22px); display: flex; gap: 24px; justify-content: center; flex-wrap: wrap; }
+.ending-stats div { padding: 8px 18px; border: 3px double var(--lace); background: rgba(11,0,17,.7); box-shadow: 0 0 20px var(--pink); }
+.ending-stats b { color: var(--gold); font-size: 1.5em; }
+.ending-credits { margin-top: 18px; font-family: 'UnifrakturMaguntia'; font-size: clamp(18px, 3vw, 30px); color: var(--cyan); text-shadow: 0 0 12px var(--cyan); line-height: 1.6; }
+.ending-parade { position: absolute; inset: 0; pointer-events: none; z-index: 2; }
+.ending-parade .gal { animation: parade var(--dur, 8s) linear infinite; }
+@keyframes parade { from { transform: translateX(-120px) rotate(0); } to { transform: translateX(110vw) rotate(720deg); } }
+#again-btn { position: relative; z-index: 6; }
+
+/* 成りダイアログ */
+.promote-dialog { position: fixed; inset: 0; z-index: 70; display: flex; align-items: center; justify-content: center; background: rgba(11,0,17,.6); }
+.promote-box { background: linear-gradient(135deg, var(--violet), var(--blood)); border: 4px double var(--lace); padding: 26px 40px; text-align: center; display: flex; gap: 14px; flex-wrap: wrap; justify-content: center; box-shadow: 0 0 60px var(--pink); }
+.promote-box p { width: 100%; font-family: 'Dela Gothic One'; font-size: 32px; color: var(--gold); text-shadow: 3px 3px 0 var(--ink); }
+
+@media (max-width: 760px) {
+  #board-stage { top: 108px; right: 0; bottom: 104px; padding: 0; align-items: center; overflow: hidden; }
+  #board-3d { flex-direction: column; align-items: center; gap: 8px; }
+  #board { --cell: min(10.4vw, calc((100dvh - 300px) / 9)); border-width: 3px; }
+  .hand-area { width: min(96vw, 520px); min-height: 0; padding: 2px 6px; }
+  .hand-pieces { flex-direction: row; flex-wrap: wrap; justify-content: center; }
+  #board-tilt, #board-tilt.shake { transform: none !important; }
+  .board-side, .board-legs { display: none; }
+  #gallery-layer { top: auto; left: 8px; right: 8px; bottom: 34px; width: auto; height: 68px; flex-direction: row; overflow: hidden; padding: 3px 8px; }
+  .gal { flex-basis: 52px; width: 48px; }
+  .gal .face { width: 40px; height: 42px; }
+  .gal .name, .gal .say { display: none; }
+  #move-log { display: none; }
+  #play-header { padding: 4px 8px; }
+  .hud-center { display: none; }
+  .hud-big { font-size: 24px; }
+  .hud-chip { font-size: 11px; padding: 3px 6px; }
+  .title-rose { display: none; }
+}
+
+</style>
+</head>
+<body>
+<audio id="match-bgm" src="./Final_Match_Point.mp3" preload="none" loop></audio>
+<audio id="victory-bgm" src="./王手の一手.mp3" preload="none"></audio>
+<canvas id="fx-canvas"></canvas>
+<div id="lace-top" class="lace"></div>
+<div id="lace-bottom" class="lace"></div>
+
+<!-- ===== タイトル ===== -->
+<section id="title-screen" class="screen active">
+  <div class="title-stage">
+    <div class="title-3d">
+      <div class="title-rose title-rose-l" aria-hidden="true"><svg viewBox="0 0 80 80"><path d="M40 16C24-5 3 17 21 37 1 45 20 70 40 54 61 70 79 45 59 37 77 17 56-5 40 16Z" fill="#b50955" stroke="#fff0fa" stroke-width="3"/><path d="M40 24c-20-10-25 15-8 20-1 16 27 16 24-2 13-12-4-28-16-18Z" fill="#ff72b4"/><path d="M35 36q8-11 15 0-1 12-13 12-9-6-2-12Z" fill="#7b004a"/></svg></div>
+      <h1 id="title-logo" class="title-logo" data-text="詰将棋１００連戦">詰将棋１００連戦</h1>
+      <div class="title-rose title-rose-r" aria-hidden="true"><svg viewBox="0 0 80 80"><path d="M40 16C24-5 3 17 21 37 1 45 20 70 40 54 61 70 79 45 59 37 77 17 56-5 40 16Z" fill="#b50955" stroke="#fff0fa" stroke-width="3"/><path d="M40 24c-20-10-25 15-8 20-1 16 27 16 24-2 13-12-4-28-16-18Z" fill="#ff72b4"/><path d="M35 36q8-11 15 0-1 12-13 12-9-6-2-12Z" fill="#7b004a"/></svg></div>
+      <p class="title-gothic">Gothic ♰ Lolita ♰ Tsume-Shogi ♰ Carnival</p>
+    </div>
+    <div class="title-menu">
+      <button id="start-btn" class="goth-btn big"><i class="fas fa-skull"></i> 開戦！！ <i class="fas fa-skull"></i></button>
+      <button id="continue-btn" class="goth-btn small" hidden><i class="fas fa-bookmark"></i> つづきから (第<span id="continue-no">1</span>局)</button>
+      <p class="title-hint">駒をクリック → 行き先をクリック。玉方は自動で最善応手。<br>詰めるたびに変なギャラリーが増えます。</p>
+    </div>
+  </div>
+</section>
+
+<!-- ===== プレイ ===== -->
+<section id="play-screen" class="screen">
+  <header id="play-header">
+    <div class="hud-left">
+      <span class="hud-label">第</span><span id="stage-no" class="hud-big">1</span><span class="hud-label">局 / 100</span>
+      <span id="stage-moves" class="hud-chip">1手詰</span>
+      <span id="elapsed" class="hud-chip" aria-live="polite">0秒</span>
+    </div>
+    <div class="hud-center">
+      <div id="tension-wrap"><span class="hud-label">TENSION</span><div id="tension-bar"><div id="tension-fill"></div></div><span id="tension-val">0%</span></div>
+    </div>
+    <div class="hud-right">
+      <span class="hud-chip pink"><i class="fas fa-users"></i> ギャラリー <span id="gallery-count">0</span></span>
+      <span class="hud-chip"><i class="fas fa-fire"></i> 連勝 <span id="combo">0</span></span>
+      <button id="hint-btn" class="goth-btn tiny"><i class="fas fa-lightbulb"></i> ヒント</button>
+      <button id="reset-btn" class="goth-btn tiny"><i class="fas fa-rotate-left"></i> やり直し</button>
+      <button id="music-btn" class="goth-btn tiny" type="button" aria-pressed="true">音楽 ON</button>
+    </div>
+  </header>
+
+  <div id="gallery-layer"></div>
+
+  <main id="board-stage">
+    <div id="board-tilt">
+      <div id="board-3d">
+        <aside id="hand-white" class="hand-area"><div class="hand-title">玉方</div><div class="hand-pieces"></div></aside>
+        <div id="board-wrap">
+          <div id="board"></div>
+          <div class="board-side board-side-front"></div>
+          <div class="board-side board-side-left"></div>
+          <div class="board-legs"><span></span><span></span><span></span><span></span></div>
+        </div>
+        <aside id="hand-black" class="hand-area"><div class="hand-title">持駒</div><div class="hand-pieces"></div></aside>
+      </div>
+    </div>
+  </main>
+
+  <div id="move-log"></div>
+  <div id="callout" class="callout"></div>
+  <div id="stage-banner" class="stage-banner"></div>
+  <div id="flash"></div>
+</section>
+
+<!-- ===== エンディング ===== -->
+<section id="ending-screen" class="screen">
+  <div class="ending-stage">
+    <div class="ending-3d">
+      <h1 class="ending-logo" data-text="完全制覇">完全制覇</h1>
+      <p class="ending-sub">— 詰将棋１００連戦 — <br>どばがき、ここに極まる。</p>
+      <div id="ending-stats" class="ending-stats"></div>
+      <div id="ending-credits" class="ending-credits"></div>
+    </div>
+    <div class="ending-parade" id="ending-parade"></div>
+    <button id="again-btn" class="goth-btn big"><i class="fas fa-crown"></i> もう一周 <i class="fas fa-crown"></i></button>
+  </div>
+</section>
+
+<div id="promote-dialog" class="promote-dialog" hidden>
+  <div class="promote-box">
+    <p>成る？</p>
+    <button id="promote-yes" class="goth-btn small">成る！！</button>
+    <button id="promote-no" class="goth-btn small">不成</button>
+  </div>
+</div>
+
+<script>
+// 自動生成 詰将棋100問 (どばがき)
+window.PUZZLES = [{"n":1,"moves":1,"b":[0,0,0,0,0,0,0,0,-8,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,5,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,6,7,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"h":[[0,0,0,0,0,0,0,0,0],[0,18,4,4,4,3,1,1,0]],"sol":[{"from":26,"to":17,"piece":5,"promote":false,"owner":1}]},{"n":2,"moves":1,"b":[0,0,0,0,0,0,-8,0,-7,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,5,0,0,0,0,0,0,5,0,0,0,0,0,0,0,0,0,0,0,14,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"h":[[0,0,0,0,0,1,0,0,0],[0,18,4,4,4,1,1,1,0]],"sol":[{"from":-1,"to":15,"piece":5,"promote":false,"owner":1}]},{"n":3,"moves":1,"b":[0,0,0,0,0,0,0,0,0,-8,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,5,15,12,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"h":[[0,0,0,0,0,1,0,0,0],[0,18,4,4,3,2,2,1,0]],"sol":[{"from":-1,"to":10,"piece":5,"promote":false,"owner":1}]},{"n":4,"moves":1,"b":[0,0,0,0,0,0,0,0,0,-8,0,0,0,0,0,0,0,0,6,0,-7,0,0,0,0,0,0,9,0,0,0,0,0,0,0,0,4,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"h":[[0,0,0,0,0,1,0,0,0],[0,17,4,4,3,3,1,1,0]],"sol":[{"from":-1,"to":10,"piece":5,"promote":false,"owner":1}]},{"n":5,"moves":1,"b":[6,0,0,-8,-1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,3,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"h":[[0,0,0,0,0,1,0,0,0],[0,17,4,3,4,3,1,2,0]],"sol":[{"from":-1,"to":11,"piece":5,"promote":false,"owner":1}]},{"n":6,"moves":1,"b":[0,0,0,0,0,0,0,-8,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,6,0,0,0,0,15,2,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"h":[[0,0,0,0,0,1,0,0,0],[0,18,3,4,4,3,1,1,0]],"sol":[{"from":-1,"to":16,"piece":5,"promote":false,"owner":1}]},{"n":7,"moves":1,"b":[0,0,0,0,-8,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,14,0,0,0,0,0,0,0,0,0,0,0,0,0,0,5,5,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"h":[[0,0,0,0,0,1,0,0,0],[0,18,4,4,4,1,1,2,0]],"sol":[{"from":-1,"to":13,"piece":5,"promote":false,"owner":1}]},{"n":8,"moves":1,"b":[0,0,0,0,0,0,0,0,-8,0,0,0,0,0,0,0,0,6,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,2,0,0,0,0,0,0,0,0,14,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"h":[[0,0,0,0,0,0,0,1,0],[0,18,3,4,4,4,0,1,0]],"sol":[{"from":-1,"to":7,"piece":7,"promote":false,"owner":1}]},{"n":9,"moves":1,"b":[4,-8,0,-6,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,12,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"h":[[0,0,0,0,0,1,0,0,0],[0,18,4,4,2,3,1,2,0]],"sol":[{"from":-1,"to":10,"piece":5,"promote":false,"owner":1}]},{"n":10,"moves":1,"b":[0,0,0,0,0,0,0,0,-8,0,0,0,0,0,0,5,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,9,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"h":[[0,0,0,0,0,1,0,0,0],[0,16,4,4,4,2,2,2,0]],"sol":[{"from":-1,"to":16,"piece":5,"promote":false,"owner":1}]},{"n":11,"moves":1,"b":[0,0,0,0,-8,0,0,12,0,0,0,-1,0,0,0,0,0,0,0,4,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,14,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"h":[[0,0,0,0,0,1,0,0,0],[0,17,4,4,2,3,1,2,0]],"sol":[{"from":-1,"to":13,"piece":5,"promote":false,"owner":1}]},{"n":12,"moves":1,"b":[0,0,0,0,0,0,4,0,-8,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,-5,0,0,0,0,0,0,0,0,6,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"h":[[0,0,0,0,0,1,0,0,0],[0,18,4,4,3,2,1,2,0]],"sol":[{"from":-1,"to":16,"piece":5,"promote":false,"owner":1}]},{"n":13,"moves":1,"b":[0,0,0,0,0,0,0,-8,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,6,0,0,0,0,15,2,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"h":[[0,0,0,0,0,1,0,0,0],[0,18,3,4,4,3,1,1,0]],"sol":[{"from":-1,"to":16,"piece":5,"promote":false,"owner":1}]},{"n":14,"moves":1,"b":[0,0,0,0,-8,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,14,0,0,0,0,0,0,0,0,0,0,0,0,0,0,5,5,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"h":[[0,0,0,0,0,1,0,0,0],[0,18,4,4,4,1,1,2,0]],"sol":[{"from":-1,"to":13,"piece":5,"promote":false,"owner":1}]},{"n":15,"moves":1,"b":[0,0,0,0,0,0,0,0,-8,0,0,0,0,0,0,0,0,6,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,2,0,0,0,0,0,0,0,0,14,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"h":[[0,0,0,0,0,0,0,1,0],[0,18,3,4,4,4,0,1,0]],"sol":[{"from":-1,"to":7,"piece":7,"promote":false,"owner":1}]},{"n":16,"moves":1,"b":[4,-8,0,-6,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,12,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"h":[[0,0,0,0,0,1,0,0,0],[0,18,4,4,2,3,1,2,0]],"sol":[{"from":-1,"to":10,"piece":5,"promote":false,"owner":1}]},{"n":17,"moves":1,"b":[0,0,0,0,0,0,0,0,-8,0,0,0,0,0,0,5,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,9,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"h":[[0,0,0,0,0,1,0,0,0],[0,16,4,4,4,2,2,2,0]],"sol":[{"from":-1,"to":16,"piece":5,"promote":false,"owner":1}]},{"n":18,"moves":1,"b":[0,0,0,0,-8,0,0,12,0,0,0,-1,0,0,0,0,0,0,0,4,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,14,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"h":[[0,0,0,0,0,1,0,0,0],[0,17,4,4,2,3,1,2,0]],"sol":[{"from":-1,"to":13,"piece":5,"promote":false,"owner":1}]},{"n":19,"moves":1,"b":[0,0,0,0,0,0,4,0,-8,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,-5,0,0,0,0,0,0,0,0,6,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"h":[[0,0,0,0,0,1,0,0,0],[0,18,4,4,3,2,1,2,0]],"sol":[{"from":-1,"to":16,"piece":5,"promote":false,"owner":1}]},{"n":20,"moves":1,"b":[0,0,0,0,0,0,0,-8,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,6,0,0,0,0,15,2,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"h":[[0,0,0,0,0,1,0,0,0],[0,18,3,4,4,3,1,1,0]],"sol":[{"from":-1,"to":16,"piece":5,"promote":false,"owner":1}]},{"n":21,"moves":1,"b":[0,0,0,0,-8,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,14,0,0,0,0,0,0,0,0,0,0,0,0,0,0,5,5,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"h":[[0,0,0,0,0,1,0,0,0],[0,18,4,4,4,1,1,2,0]],"sol":[{"from":-1,"to":13,"piece":5,"promote":false,"owner":1}]},{"n":22,"moves":1,"b":[0,0,0,0,0,0,0,0,-8,0,0,0,0,0,0,0,0,6,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,2,0,0,0,0,0,0,0,0,14,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"h":[[0,0,0,0,0,0,0,1,0],[0,18,3,4,4,4,0,1,0]],"sol":[{"from":-1,"to":7,"piece":7,"promote":false,"owner":1}]},{"n":23,"moves":1,"b":[4,-8,0,-6,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,12,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"h":[[0,0,0,0,0,1,0,0,0],[0,18,4,4,2,3,1,2,0]],"sol":[{"from":-1,"to":10,"piece":5,"promote":false,"owner":1}]},{"n":24,"moves":1,"b":[0,0,0,0,0,0,0,0,-8,0,0,0,0,0,0,5,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,9,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"h":[[0,0,0,0,0,1,0,0,0],[0,16,4,4,4,2,2,2,0]],"sol":[{"from":-1,"to":16,"piece":5,"promote":false,"owner":1}]},{"n":25,"moves":1,"b":[0,0,0,0,-8,0,0,12,0,0,0,-1,0,0,0,0,0,0,0,4,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,14,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"h":[[0,0,0,0,0,1,0,0,0],[0,17,4,4,2,3,1,2,0]],"sol":[{"from":-1,"to":13,"piece":5,"promote":false,"owner":1}]},{"n":26,"moves":1,"b":[0,0,0,0,0,0,4,0,-8,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,-5,0,0,0,0,0,0,0,0,6,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"h":[[0,0,0,0,0,1,0,0,0],[0,18,4,4,3,2,1,2,0]],"sol":[{"from":-1,"to":16,"piece":5,"promote":false,"owner":1}]},{"n":27,"moves":1,"b":[0,0,0,0,0,0,0,-8,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,6,0,0,0,0,15,2,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"h":[[0,0,0,0,0,1,0,0,0],[0,18,3,4,4,3,1,1,0]],"sol":[{"from":-1,"to":16,"piece":5,"promote":false,"owner":1}]},{"n":28,"moves":1,"b":[0,0,0,0,-8,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,14,0,0,0,0,0,0,0,0,0,0,0,0,0,0,5,5,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"h":[[0,0,0,0,0,1,0,0,0],[0,18,4,4,4,1,1,2,0]],"sol":[{"from":-1,"to":13,"piece":5,"promote":false,"owner":1}]},{"n":29,"moves":1,"b":[0,0,0,0,0,0,0,0,-8,0,0,0,0,0,0,0,0,6,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,2,0,0,0,0,0,0,0,0,14,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"h":[[0,0,0,0,0,0,0,1,0],[0,18,3,4,4,4,0,1,0]],"sol":[{"from":-1,"to":7,"piece":7,"promote":false,"owner":1}]},{"n":30,"moves":1,"b":[4,-8,0,-6,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,12,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"h":[[0,0,0,0,0,1,0,0,0],[0,18,4,4,2,3,1,2,0]],"sol":[{"from":-1,"to":10,"piece":5,"promote":false,"owner":1}]},{"n":31,"moves":3,"b":[0,0,0,0,0,0,0,-8,0,0,0,0,0,0,0,0,0,0,0,0,0,0,9,0,0,0,5,0,0,0,0,0,0,2,0,0,0,0,0,0,9,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"h":[[0,0,1,0,0,0,0,0,0],[0,16,2,4,4,3,2,2,0]],"sol":[{"from":-1,"to":25,"piece":2,"promote":false,"owner":1},{"from":7,"to":8,"piece":8,"promote":false,"owner":-1},{"from":25,"to":16,"piece":2,"promote":true,"owner":1}]},{"n":32,"moves":3,"b":[0,0,0,0,0,-8,0,0,0,0,0,0,0,7,0,0,0,0,0,0,0,3,0,0,-4,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,9,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"h":[[0,0,0,0,1,1,0,0,0],[0,16,4,3,2,3,2,1,0]],"sol":[{"from":21,"to":4,"piece":3,"promote":true,"owner":1},{"from":5,"to":6,"piece":8,"promote":false,"owner":-1},{"from":-1,"to":15,"piece":5,"promote":false,"owner":1}]},{"n":33,"moves":3,"b":[0,0,0,0,0,0,14,0,-8,0,0,0,0,0,0,0,-1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,5,0,0,0,0,0,0,0,1,5,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"h":[[0,1,0,0,0,1,0,0,0],[0,15,4,4,4,1,1,2,0]],"sol":[{"from":-1,"to":7,"piece":5,"promote":false,"owner":1},{"from":8,"to":17,"piece":8,"promote":false,"owner":-1},{"from":6,"to":16,"piece":6,"promote":false,"owner":1}]},{"n":34,"moves":3,"b":[0,0,0,15,-3,4,-8,-1,0,0,0,0,0,0,0,0,0,14,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"h":[[0,0,0,0,0,0,0,1,0],[0,17,4,3,3,4,1,0,0]],"sol":[{"from":-1,"to":15,"piece":7,"promote":false,"owner":1},{"from":6,"to":5,"piece":8,"promote":false,"owner":-1},{"from":3,"to":13,"piece":7,"promote":false,"owner":1}]},{"n":35,"moves":3,"b":[0,0,0,0,0,0,0,0,0,0,0,5,0,0,-8,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,3,0,0,0,0,0,0,0,0,14,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"h":[[0,0,0,0,1,1,0,0,0],[0,18,4,3,3,2,1,2,0]],"sol":[{"from":-1,"to":23,"piece":5,"promote":false,"owner":1},{"from":14,"to":6,"piece":8,"promote":false,"owner":-1},{"from":34,"to":15,"piece":3,"promote":true,"owner":1}]},{"n":36,"moves":3,"b":[0,0,0,0,0,-8,0,-4,0,0,0,0,0,-3,0,0,14,0,0,0,0,9,0,0,0,0,0,0,0,0,0,0,0,0,4,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"h":[[0,0,0,0,1,0,0,1,0],[0,17,4,3,1,4,1,1,0]],"sol":[{"from":-1,"to":6,"piece":7,"promote":false,"owner":1},{"from":5,"to":14,"piece":8,"promote":false,"owner":-1},{"from":34,"to":24,"piece":4,"promote":true,"owner":1}]},{"n":37,"moves":3,"b":[-7,0,0,0,0,0,0,0,0,-8,0,0,0,0,0,0,0,0,0,0,0,7,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,6,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"h":[[0,0,0,0,2,0,0,0,0],[0,18,4,4,2,4,1,0,0]],"sol":[{"from":-1,"to":19,"piece":4,"promote":false,"owner":1},{"from":9,"to":1,"piece":8,"promote":false,"owner":-1},{"from":-1,"to":10,"piece":4,"promote":false,"owner":1}]},{"n":38,"moves":3,"b":[0,0,0,0,0,0,0,-8,0,0,0,0,0,0,0,0,0,0,0,0,0,0,9,0,0,0,5,0,0,0,0,0,0,2,0,0,0,0,0,0,9,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"h":[[0,0,1,0,0,0,0,0,0],[0,16,2,4,4,3,2,2,0]],"sol":[{"from":-1,"to":25,"piece":2,"promote":false,"owner":1},{"from":7,"to":8,"piece":8,"promote":false,"owner":-1},{"from":25,"to":16,"piece":2,"promote":true,"owner":1}]},{"n":39,"moves":3,"b":[0,0,0,0,0,-8,0,0,0,0,0,0,0,7,0,0,0,0,0,0,0,3,0,0,-4,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,9,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"h":[[0,0,0,0,1,1,0,0,0],[0,16,4,3,2,3,2,1,0]],"sol":[{"from":21,"to":4,"piece":3,"promote":true,"owner":1},{"from":5,"to":6,"piece":8,"promote":false,"owner":-1},{"from":-1,"to":15,"piece":5,"promote":false,"owner":1}]},{"n":40,"moves":3,"b":[0,0,0,0,0,0,14,0,-8,0,0,0,0,0,0,0,-1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,5,0,0,0,0,0,0,0,1,5,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"h":[[0,1,0,0,0,1,0,0,0],[0,15,4,4,4,1,1,2,0]],"sol":[{"from":-1,"to":7,"piece":5,"promote":false,"owner":1},{"from":8,"to":17,"piece":8,"promote":false,"owner":-1},{"from":6,"to":16,"piece":6,"promote":false,"owner":1}]},{"n":41,"moves":3,"b":[0,0,0,15,-3,4,-8,-1,0,0,0,0,0,0,0,0,0,14,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"h":[[0,0,0,0,0,0,0,1,0],[0,17,4,3,3,4,1,0,0]],"sol":[{"from":-1,"to":15,"piece":7,"promote":false,"owner":1},{"from":6,"to":5,"piece":8,"promote":false,"owner":-1},{"from":3,"to":13,"piece":7,"promote":false,"owner":1}]},{"n":42,"moves":3,"b":[0,0,0,0,0,0,0,0,0,0,0,5,0,0,-8,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,3,0,0,0,0,0,0,0,0,14,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"h":[[0,0,0,0,1,1,0,0,0],[0,18,4,3,3,2,1,2,0]],"sol":[{"from":-1,"to":23,"piece":5,"promote":false,"owner":1},{"from":14,"to":6,"piece":8,"promote":false,"owner":-1},{"from":34,"to":15,"piece":3,"promote":true,"owner":1}]},{"n":43,"moves":3,"b":[0,0,0,0,0,-8,0,-4,0,0,0,0,0,-3,0,0,14,0,0,0,0,9,0,0,0,0,0,0,0,0,0,0,0,0,4,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"h":[[0,0,0,0,1,0,0,1,0],[0,17,4,3,1,4,1,1,0]],"sol":[{"from":-1,"to":6,"piece":7,"promote":false,"owner":1},{"from":5,"to":14,"piece":8,"promote":false,"owner":-1},{"from":34,"to":24,"piece":4,"promote":true,"owner":1}]},{"n":44,"moves":3,"b":[-7,0,0,0,0,0,0,0,0,-8,0,0,0,0,0,0,0,0,0,0,0,7,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,6,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"h":[[0,0,0,0,2,0,0,0,0],[0,18,4,4,2,4,1,0,0]],"sol":[{"from":-1,"to":19,"piece":4,"promote":false,"owner":1},{"from":9,"to":1,"piece":8,"promote":false,"owner":-1},{"from":-1,"to":10,"piece":4,"promote":false,"owner":1}]},{"n":45,"moves":3,"b":[0,0,0,0,0,0,0,-8,0,0,0,0,0,0,0,0,0,0,0,0,0,0,9,0,0,0,5,0,0,0,0,0,0,2,0,0,0,0,0,0,9,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"h":[[0,0,1,0,0,0,0,0,0],[0,16,2,4,4,3,2,2,0]],"sol":[{"from":-1,"to":25,"piece":2,"promote":false,"owner":1},{"from":7,"to":8,"piece":8,"promote":false,"owner":-1},{"from":25,"to":16,"piece":2,"promote":true,"owner":1}]},{"n":46,"moves":3,"b":[0,0,0,0,0,-8,0,0,0,0,0,0,0,7,0,0,0,0,0,0,0,3,0,0,-4,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,9,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"h":[[0,0,0,0,1,1,0,0,0],[0,16,4,3,2,3,2,1,0]],"sol":[{"from":21,"to":4,"piece":3,"promote":true,"owner":1},{"from":5,"to":6,"piece":8,"promote":false,"owner":-1},{"from":-1,"to":15,"piece":5,"promote":false,"owner":1}]},{"n":47,"moves":3,"b":[0,0,0,0,0,0,14,0,-8,0,0,0,0,0,0,0,-1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,5,0,0,0,0,0,0,0,1,5,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"h":[[0,1,0,0,0,1,0,0,0],[0,15,4,4,4,1,1,2,0]],"sol":[{"from":-1,"to":7,"piece":5,"promote":false,"owner":1},{"from":8,"to":17,"piece":8,"promote":false,"owner":-1},{"from":6,"to":16,"piece":6,"promote":false,"owner":1}]},{"n":48,"moves":3,"b":[0,0,0,15,-3,4,-8,-1,0,0,0,0,0,0,0,0,0,14,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"h":[[0,0,0,0,0,0,0,1,0],[0,17,4,3,3,4,1,0,0]],"sol":[{"from":-1,"to":15,"piece":7,"promote":false,"owner":1},{"from":6,"to":5,"piece":8,"promote":false,"owner":-1},{"from":3,"to":13,"piece":7,"promote":false,"owner":1}]},{"n":49,"moves":3,"b":[0,0,0,0,0,0,0,0,0,0,0,5,0,0,-8,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,3,0,0,0,0,0,0,0,0,14,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"h":[[0,0,0,0,1,1,0,0,0],[0,18,4,3,3,2,1,2,0]],"sol":[{"from":-1,"to":23,"piece":5,"promote":false,"owner":1},{"from":14,"to":6,"piece":8,"promote":false,"owner":-1},{"from":34,"to":15,"piece":3,"promote":true,"owner":1}]},{"n":50,"moves":3,"b":[0,0,0,0,0,-8,0,-4,0,0,0,0,0,-3,0,0,14,0,0,0,0,9,0,0,0,0,0,0,0,0,0,0,0,0,4,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"h":[[0,0,0,0,1,0,0,1,0],[0,17,4,3,1,4,1,1,0]],"sol":[{"from":-1,"to":6,"piece":7,"promote":false,"owner":1},{"from":5,"to":14,"piece":8,"promote":false,"owner":-1},{"from":34,"to":24,"piece":4,"promote":true,"owner":1}]},{"n":51,"moves":3,"b":[-7,0,0,0,0,0,0,0,0,-8,0,0,0,0,0,0,0,0,0,0,0,7,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,6,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"h":[[0,0,0,0,2,0,0,0,0],[0,18,4,4,2,4,1,0,0]],"sol":[{"from":-1,"to":19,"piece":4,"promote":false,"owner":1},{"from":9,"to":1,"piece":8,"promote":false,"owner":-1},{"from":-1,"to":10,"piece":4,"promote":false,"owner":1}]},{"n":52,"moves":3,"b":[0,0,0,0,0,0,0,-8,0,0,0,0,0,0,0,0,0,0,0,0,0,0,9,0,0,0,5,0,0,0,0,0,0,2,0,0,0,0,0,0,9,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"h":[[0,0,1,0,0,0,0,0,0],[0,16,2,4,4,3,2,2,0]],"sol":[{"from":-1,"to":25,"piece":2,"promote":false,"owner":1},{"from":7,"to":8,"piece":8,"promote":false,"owner":-1},{"from":25,"to":16,"piece":2,"promote":true,"owner":1}]},{"n":53,"moves":3,"b":[0,0,0,0,0,-8,0,0,0,0,0,0,0,7,0,0,0,0,0,0,0,3,0,0,-4,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,9,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"h":[[0,0,0,0,1,1,0,0,0],[0,16,4,3,2,3,2,1,0]],"sol":[{"from":21,"to":4,"piece":3,"promote":true,"owner":1},{"from":5,"to":6,"piece":8,"promote":false,"owner":-1},{"from":-1,"to":15,"piece":5,"promote":false,"owner":1}]},{"n":54,"moves":3,"b":[0,0,0,0,0,0,14,0,-8,0,0,0,0,0,0,0,-1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,5,0,0,0,0,0,0,0,1,5,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"h":[[0,1,0,0,0,1,0,0,0],[0,15,4,4,4,1,1,2,0]],"sol":[{"from":-1,"to":7,"piece":5,"promote":false,"owner":1},{"from":8,"to":17,"piece":8,"promote":false,"owner":-1},{"from":6,"to":16,"piece":6,"promote":false,"owner":1}]},{"n":55,"moves":3,"b":[0,0,0,15,-3,4,-8,-1,0,0,0,0,0,0,0,0,0,14,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"h":[[0,0,0,0,0,0,0,1,0],[0,17,4,3,3,4,1,0,0]],"sol":[{"from":-1,"to":15,"piece":7,"promote":false,"owner":1},{"from":6,"to":5,"piece":8,"promote":false,"owner":-1},{"from":3,"to":13,"piece":7,"promote":false,"owner":1}]},{"n":56,"moves":3,"b":[0,0,0,0,0,0,0,0,0,0,0,5,0,0,-8,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,3,0,0,0,0,0,0,0,0,14,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"h":[[0,0,0,0,1,1,0,0,0],[0,18,4,3,3,2,1,2,0]],"sol":[{"from":-1,"to":23,"piece":5,"promote":false,"owner":1},{"from":14,"to":6,"piece":8,"promote":false,"owner":-1},{"from":34,"to":15,"piece":3,"promote":true,"owner":1}]},{"n":57,"moves":3,"b":[0,0,0,0,0,-8,0,-4,0,0,0,0,0,-3,0,0,14,0,0,0,0,9,0,0,0,0,0,0,0,0,0,0,0,0,4,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"h":[[0,0,0,0,1,0,0,1,0],[0,17,4,3,1,4,1,1,0]],"sol":[{"from":-1,"to":6,"piece":7,"promote":false,"owner":1},{"from":5,"to":14,"piece":8,"promote":false,"owner":-1},{"from":34,"to":24,"piece":4,"promote":true,"owner":1}]},{"n":58,"moves":3,"b":[-7,0,0,0,0,0,0,0,0,-8,0,0,0,0,0,0,0,0,0,0,0,7,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,6,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"h":[[0,0,0,0,2,0,0,0,0],[0,18,4,4,2,4,1,0,0]],"sol":[{"from":-1,"to":19,"piece":4,"promote":false,"owner":1},{"from":9,"to":1,"piece":8,"promote":false,"owner":-1},{"from":-1,"to":10,"piece":4,"promote":false,"owner":1}]},{"n":59,"moves":3,"b":[0,0,0,0,0,0,0,-8,0,0,0,0,0,0,0,0,0,0,0,0,0,0,9,0,0,0,5,0,0,0,0,0,0,2,0,0,0,0,0,0,9,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"h":[[0,0,1,0,0,0,0,0,0],[0,16,2,4,4,3,2,2,0]],"sol":[{"from":-1,"to":25,"piece":2,"promote":false,"owner":1},{"from":7,"to":8,"piece":8,"promote":false,"owner":-1},{"from":25,"to":16,"piece":2,"promote":true,"owner":1}]},{"n":60,"moves":3,"b":[0,0,0,0,0,-8,0,0,0,0,0,0,0,7,0,0,0,0,0,0,0,3,0,0,-4,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,9,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"h":[[0,0,0,0,1,1,0,0,0],[0,16,4,3,2,3,2,1,0]],"sol":[{"from":21,"to":4,"piece":3,"promote":true,"owner":1},{"from":5,"to":6,"piece":8,"promote":false,"owner":-1},{"from":-1,"to":15,"piece":5,"promote":false,"owner":1}]},{"n":61,"moves":3,"b":[0,0,0,0,0,0,14,0,-8,0,0,0,0,0,0,0,-1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,5,0,0,0,0,0,0,0,1,5,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"h":[[0,1,0,0,0,1,0,0,0],[0,15,4,4,4,1,1,2,0]],"sol":[{"from":-1,"to":7,"piece":5,"promote":false,"owner":1},{"from":8,"to":17,"piece":8,"promote":false,"owner":-1},{"from":6,"to":16,"piece":6,"promote":false,"owner":1}]},{"n":62,"moves":3,"b":[0,0,0,15,-3,4,-8,-1,0,0,0,0,0,0,0,0,0,14,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"h":[[0,0,0,0,0,0,0,1,0],[0,17,4,3,3,4,1,0,0]],"sol":[{"from":-1,"to":15,"piece":7,"promote":false,"owner":1},{"from":6,"to":5,"piece":8,"promote":false,"owner":-1},{"from":3,"to":13,"piece":7,"promote":false,"owner":1}]},{"n":63,"moves":3,"b":[0,0,0,0,0,0,0,0,0,0,0,5,0,0,-8,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,3,0,0,0,0,0,0,0,0,14,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"h":[[0,0,0,0,1,1,0,0,0],[0,18,4,3,3,2,1,2,0]],"sol":[{"from":-1,"to":23,"piece":5,"promote":false,"owner":1},{"from":14,"to":6,"piece":8,"promote":false,"owner":-1},{"from":34,"to":15,"piece":3,"promote":true,"owner":1}]},{"n":64,"moves":3,"b":[0,0,0,0,0,-8,0,-4,0,0,0,0,0,-3,0,0,14,0,0,0,0,9,0,0,0,0,0,0,0,0,0,0,0,0,4,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"h":[[0,0,0,0,1,0,0,1,0],[0,17,4,3,1,4,1,1,0]],"sol":[{"from":-1,"to":6,"piece":7,"promote":false,"owner":1},{"from":5,"to":14,"piece":8,"promote":false,"owner":-1},{"from":34,"to":24,"piece":4,"promote":true,"owner":1}]},{"n":65,"moves":3,"b":[-7,0,0,0,0,0,0,0,0,-8,0,0,0,0,0,0,0,0,0,0,0,7,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,6,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"h":[[0,0,0,0,2,0,0,0,0],[0,18,4,4,2,4,1,0,0]],"sol":[{"from":-1,"to":19,"piece":4,"promote":false,"owner":1},{"from":9,"to":1,"piece":8,"promote":false,"owner":-1},{"from":-1,"to":10,"piece":4,"promote":false,"owner":1}]},{"n":66,"moves":3,"b":[0,0,0,0,0,0,0,-8,0,0,0,0,0,0,0,0,0,0,0,0,0,0,9,0,0,0,5,0,0,0,0,0,0,2,0,0,0,0,0,0,9,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"h":[[0,0,1,0,0,0,0,0,0],[0,16,2,4,4,3,2,2,0]],"sol":[{"from":-1,"to":25,"piece":2,"promote":false,"owner":1},{"from":7,"to":8,"piece":8,"promote":false,"owner":-1},{"from":25,"to":16,"piece":2,"promote":true,"owner":1}]},{"n":67,"moves":3,"b":[0,0,0,0,0,-8,0,0,0,0,0,0,0,7,0,0,0,0,0,0,0,3,0,0,-4,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,9,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"h":[[0,0,0,0,1,1,0,0,0],[0,16,4,3,2,3,2,1,0]],"sol":[{"from":21,"to":4,"piece":3,"promote":true,"owner":1},{"from":5,"to":6,"piece":8,"promote":false,"owner":-1},{"from":-1,"to":15,"piece":5,"promote":false,"owner":1}]},{"n":68,"moves":3,"b":[0,0,0,0,0,0,14,0,-8,0,0,0,0,0,0,0,-1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,5,0,0,0,0,0,0,0,1,5,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"h":[[0,1,0,0,0,1,0,0,0],[0,15,4,4,4,1,1,2,0]],"sol":[{"from":-1,"to":7,"piece":5,"promote":false,"owner":1},{"from":8,"to":17,"piece":8,"promote":false,"owner":-1},{"from":6,"to":16,"piece":6,"promote":false,"owner":1}]},{"n":69,"moves":3,"b":[0,0,0,15,-3,4,-8,-1,0,0,0,0,0,0,0,0,0,14,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"h":[[0,0,0,0,0,0,0,1,0],[0,17,4,3,3,4,1,0,0]],"sol":[{"from":-1,"to":15,"piece":7,"promote":false,"owner":1},{"from":6,"to":5,"piece":8,"promote":false,"owner":-1},{"from":3,"to":13,"piece":7,"promote":false,"owner":1}]},{"n":70,"moves":3,"b":[0,0,0,0,0,0,0,0,0,0,0,5,0,0,-8,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,3,0,0,0,0,0,0,0,0,14,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"h":[[0,0,0,0,1,1,0,0,0],[0,18,4,3,3,2,1,2,0]],"sol":[{"from":-1,"to":23,"piece":5,"promote":false,"owner":1},{"from":14,"to":6,"piece":8,"promote":false,"owner":-1},{"from":34,"to":15,"piece":3,"promote":true,"owner":1}]},{"n":71,"moves":3,"b":[0,0,0,0,0,-8,0,-4,0,0,0,0,0,-3,0,0,14,0,0,0,0,9,0,0,0,0,0,0,0,0,0,0,0,0,4,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"h":[[0,0,0,0,1,0,0,1,0],[0,17,4,3,1,4,1,1,0]],"sol":[{"from":-1,"to":6,"piece":7,"promote":false,"owner":1},{"from":5,"to":14,"piece":8,"promote":false,"owner":-1},{"from":34,"to":24,"piece":4,"promote":true,"owner":1}]},{"n":72,"moves":3,"b":[-7,0,0,0,0,0,0,0,0,-8,0,0,0,0,0,0,0,0,0,0,0,7,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,6,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"h":[[0,0,0,0,2,0,0,0,0],[0,18,4,4,2,4,1,0,0]],"sol":[{"from":-1,"to":19,"piece":4,"promote":false,"owner":1},{"from":9,"to":1,"piece":8,"promote":false,"owner":-1},{"from":-1,"to":10,"piece":4,"promote":false,"owner":1}]},{"n":73,"moves":3,"b":[0,0,0,0,0,0,0,-8,0,0,0,0,0,0,0,0,0,0,0,0,0,0,9,0,0,0,5,0,0,0,0,0,0,2,0,0,0,0,0,0,9,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"h":[[0,0,1,0,0,0,0,0,0],[0,16,2,4,4,3,2,2,0]],"sol":[{"from":-1,"to":25,"piece":2,"promote":false,"owner":1},{"from":7,"to":8,"piece":8,"promote":false,"owner":-1},{"from":25,"to":16,"piece":2,"promote":true,"owner":1}]},{"n":74,"moves":3,"b":[0,0,0,0,0,-8,0,0,0,0,0,0,0,7,0,0,0,0,0,0,0,3,0,0,-4,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,9,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"h":[[0,0,0,0,1,1,0,0,0],[0,16,4,3,2,3,2,1,0]],"sol":[{"from":21,"to":4,"piece":3,"promote":true,"owner":1},{"from":5,"to":6,"piece":8,"promote":false,"owner":-1},{"from":-1,"to":15,"piece":5,"promote":false,"owner":1}]},{"n":75,"moves":3,"b":[0,0,0,0,0,0,14,0,-8,0,0,0,0,0,0,0,-1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,5,0,0,0,0,0,0,0,1,5,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"h":[[0,1,0,0,0,1,0,0,0],[0,15,4,4,4,1,1,2,0]],"sol":[{"from":-1,"to":7,"piece":5,"promote":false,"owner":1},{"from":8,"to":17,"piece":8,"promote":false,"owner":-1},{"from":6,"to":16,"piece":6,"promote":false,"owner":1}]},{"n":76,"moves":5,"b":[0,0,-5,0,0,0,0,0,0,0,0,0,5,0,0,0,0,0,0,0,0,0,-8,0,0,0,0,0,0,1,0,0,0,5,0,0,0,0,5,0,0,0,0,0,0,0,0,7,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"h":[[0,0,0,0,1,0,1,0,0],[0,17,4,4,3,0,1,1,0]],"sol":[{"from":-1,"to":32,"piece":6,"promote":false,"owner":1},{"from":22,"to":31,"piece":8,"promote":false,"owner":-1},{"from":-1,"to":21,"piece":4,"promote":false,"owner":1},{"from":31,"to":41,"piece":8,"promote":false,"owner":-1},{"from":33,"to":42,"piece":5,"promote":false,"owner":1}]},{"n":77,"moves":5,"b":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,-4,0,0,0,0,0,3,0,-8,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,15,0,0,0,0,0,6,5,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"h":[[0,0,0,0,0,2,0,0,0],[0,18,4,3,3,1,1,1,0]],"sol":[{"from":42,"to":32,"piece":7,"promote":false,"owner":1},{"from":23,"to":13,"piece":8,"promote":false,"owner":-1},{"from":-1,"to":22,"piece":5,"promote":false,"owner":1},{"from":13,"to":3,"piece":8,"promote":false,"owner":-1},{"from":-1,"to":2,"piece":5,"promote":false,"owner":1}]},{"n":78,"moves":5,"b":[0,0,0,0,0,0,0,0,0,0,0,0,0,4,7,0,0,0,0,0,0,0,-8,0,-4,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,14,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,5,9,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"h":[[0,0,0,0,1,1,0,0,0],[0,17,4,4,1,2,1,1,0]],"sol":[{"from":41,"to":21,"piece":6,"promote":false,"owner":1},{"from":22,"to":14,"piece":8,"promote":false,"owner":-1},{"from":-1,"to":23,"piece":4,"promote":false,"owner":1},{"from":14,"to":6,"piece":8,"promote":false,"owner":-1},{"from":-1,"to":15,"piece":5,"promote":false,"owner":1}]},{"n":79,"moves":5,"b":[0,0,-8,-1,0,5,0,0,0,0,-4,-1,0,0,0,0,0,0,0,0,12,0,0,0,0,0,0,0,0,4,0,0,0,0,0,0,2,0,5,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"h":[[0,0,0,1,0,0,1,0,0],[0,16,3,3,1,2,1,2,0]],"sol":[{"from":-1,"to":19,"piece":3,"promote":false,"owner":1},{"from":10,"to":19,"piece":4,"promote":false,"owner":-1},{"from":-1,"to":10,"piece":6,"promote":false,"owner":1},{"from":2,"to":1,"piece":8,"promote":false,"owner":-1},{"from":36,"to":0,"piece":2,"promote":true,"owner":1}]},{"n":80,"moves":5,"b":[0,0,0,0,0,0,0,0,0,-1,0,0,0,0,0,0,0,0,-8,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,5,0,0,0,0,0,0,0,0,0,0,2,0,0,0,0,0,0,0,14,0,14,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"h":[[0,0,0,1,1,0,0,0,0],[0,17,3,3,3,3,0,2,0]],"sol":[{"from":-1,"to":37,"piece":3,"promote":false,"owner":1},{"from":18,"to":19,"piece":8,"promote":false,"owner":-1},{"from":37,"to":20,"piece":3,"promote":true,"owner":1},{"from":19,"to":18,"piece":8,"promote":false,"owner":-1},{"from":-1,"to":10,"piece":4,"promote":false,"owner":1}]},{"n":81,"moves":5,"b":[0,-3,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,-8,0,-4,0,0,0,0,0,-2,0,0,5,0,0,0,0,12,0,0,0,0,0,0,0,0,0,0,0,15,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"h":[[0,0,0,0,1,1,0,0,0],[0,17,3,3,1,2,2,1,0]],"sol":[{"from":48,"to":21,"piece":7,"promote":false,"owner":1},{"from":20,"to":10,"piece":8,"promote":false,"owner":-1},{"from":-1,"to":2,"piece":4,"promote":false,"owner":1},{"from":10,"to":9,"piece":8,"promote":false,"owner":-1},{"from":-1,"to":10,"piece":5,"promote":false,"owner":1}]},{"n":82,"moves":5,"b":[0,0,-5,0,0,0,0,0,0,0,0,0,5,0,0,0,0,0,0,0,0,0,-8,0,0,0,0,0,0,1,0,0,0,5,0,0,0,0,5,0,0,0,0,0,0,0,0,7,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"h":[[0,0,0,0,1,0,1,0,0],[0,17,4,4,3,0,1,1,0]],"sol":[{"from":-1,"to":32,"piece":6,"promote":false,"owner":1},{"from":22,"to":31,"piece":8,"promote":false,"owner":-1},{"from":-1,"to":21,"piece":4,"promote":false,"owner":1},{"from":31,"to":41,"piece":8,"promote":false,"owner":-1},{"from":33,"to":42,"piece":5,"promote":false,"owner":1}]},{"n":83,"moves":5,"b":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,-4,0,0,0,0,0,3,0,-8,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,15,0,0,0,0,0,6,5,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"h":[[0,0,0,0,0,2,0,0,0],[0,18,4,3,3,1,1,1,0]],"sol":[{"from":42,"to":32,"piece":7,"promote":false,"owner":1},{"from":23,"to":13,"piece":8,"promote":false,"owner":-1},{"from":-1,"to":22,"piece":5,"promote":false,"owner":1},{"from":13,"to":3,"piece":8,"promote":false,"owner":-1},{"from":-1,"to":2,"piece":5,"promote":false,"owner":1}]},{"n":84,"moves":5,"b":[0,0,0,0,0,0,0,0,0,0,0,0,0,4,7,0,0,0,0,0,0,0,-8,0,-4,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,14,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,5,9,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"h":[[0,0,0,0,1,1,0,0,0],[0,17,4,4,1,2,1,1,0]],"sol":[{"from":41,"to":21,"piece":6,"promote":false,"owner":1},{"from":22,"to":14,"piece":8,"promote":false,"owner":-1},{"from":-1,"to":23,"piece":4,"promote":false,"owner":1},{"from":14,"to":6,"piece":8,"promote":false,"owner":-1},{"from":-1,"to":15,"piece":5,"promote":false,"owner":1}]},{"n":85,"moves":5,"b":[0,0,-8,-1,0,5,0,0,0,0,-4,-1,0,0,0,0,0,0,0,0,12,0,0,0,0,0,0,0,0,4,0,0,0,0,0,0,2,0,5,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"h":[[0,0,0,1,0,0,1,0,0],[0,16,3,3,1,2,1,2,0]],"sol":[{"from":-1,"to":19,"piece":3,"promote":false,"owner":1},{"from":10,"to":19,"piece":4,"promote":false,"owner":-1},{"from":-1,"to":10,"piece":6,"promote":false,"owner":1},{"from":2,"to":1,"piece":8,"promote":false,"owner":-1},{"from":36,"to":0,"piece":2,"promote":true,"owner":1}]},{"n":86,"moves":5,"b":[0,0,0,0,0,0,0,0,0,-1,0,0,0,0,0,0,0,0,-8,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,5,0,0,0,0,0,0,0,0,0,0,2,0,0,0,0,0,0,0,14,0,14,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"h":[[0,0,0,1,1,0,0,0,0],[0,17,3,3,3,3,0,2,0]],"sol":[{"from":-1,"to":37,"piece":3,"promote":false,"owner":1},{"from":18,"to":19,"piece":8,"promote":false,"owner":-1},{"from":37,"to":20,"piece":3,"promote":true,"owner":1},{"from":19,"to":18,"piece":8,"promote":false,"owner":-1},{"from":-1,"to":10,"piece":4,"promote":false,"owner":1}]},{"n":87,"moves":5,"b":[0,-3,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,-8,0,-4,0,0,0,0,0,-2,0,0,5,0,0,0,0,12,0,0,0,0,0,0,0,0,0,0,0,15,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"h":[[0,0,0,0,1,1,0,0,0],[0,17,3,3,1,2,2,1,0]],"sol":[{"from":48,"to":21,"piece":7,"promote":false,"owner":1},{"from":20,"to":10,"piece":8,"promote":false,"owner":-1},{"from":-1,"to":2,"piece":4,"promote":false,"owner":1},{"from":10,"to":9,"piece":8,"promote":false,"owner":-1},{"from":-1,"to":10,"piece":5,"promote":false,"owner":1}]},{"n":88,"moves":5,"b":[0,0,-5,0,0,0,0,0,0,0,0,0,5,0,0,0,0,0,0,0,0,0,-8,0,0,0,0,0,0,1,0,0,0,5,0,0,0,0,5,0,0,0,0,0,0,0,0,7,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"h":[[0,0,0,0,1,0,1,0,0],[0,17,4,4,3,0,1,1,0]],"sol":[{"from":-1,"to":32,"piece":6,"promote":false,"owner":1},{"from":22,"to":31,"piece":8,"promote":false,"owner":-1},{"from":-1,"to":21,"piece":4,"promote":false,"owner":1},{"from":31,"to":41,"piece":8,"promote":false,"owner":-1},{"from":33,"to":42,"piece":5,"promote":false,"owner":1}]},{"n":89,"moves":5,"b":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,-4,0,0,0,0,0,3,0,-8,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,15,0,0,0,0,0,6,5,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"h":[[0,0,0,0,0,2,0,0,0],[0,18,4,3,3,1,1,1,0]],"sol":[{"from":42,"to":32,"piece":7,"promote":false,"owner":1},{"from":23,"to":13,"piece":8,"promote":false,"owner":-1},{"from":-1,"to":22,"piece":5,"promote":false,"owner":1},{"from":13,"to":3,"piece":8,"promote":false,"owner":-1},{"from":-1,"to":2,"piece":5,"promote":false,"owner":1}]},{"n":90,"moves":5,"b":[0,0,0,0,0,0,0,0,0,0,0,0,0,4,7,0,0,0,0,0,0,0,-8,0,-4,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,14,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,5,9,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"h":[[0,0,0,0,1,1,0,0,0],[0,17,4,4,1,2,1,1,0]],"sol":[{"from":41,"to":21,"piece":6,"promote":false,"owner":1},{"from":22,"to":14,"piece":8,"promote":false,"owner":-1},{"from":-1,"to":23,"piece":4,"promote":false,"owner":1},{"from":14,"to":6,"piece":8,"promote":false,"owner":-1},{"from":-1,"to":15,"piece":5,"promote":false,"owner":1}]},{"n":91,"moves":5,"b":[0,0,-8,-1,0,5,0,0,0,0,-4,-1,0,0,0,0,0,0,0,0,12,0,0,0,0,0,0,0,0,4,0,0,0,0,0,0,2,0,5,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"h":[[0,0,0,1,0,0,1,0,0],[0,16,3,3,1,2,1,2,0]],"sol":[{"from":-1,"to":19,"piece":3,"promote":false,"owner":1},{"from":10,"to":19,"piece":4,"promote":false,"owner":-1},{"from":-1,"to":10,"piece":6,"promote":false,"owner":1},{"from":2,"to":1,"piece":8,"promote":false,"owner":-1},{"from":36,"to":0,"piece":2,"promote":true,"owner":1}]},{"n":92,"moves":5,"b":[0,0,0,0,0,0,0,0,0,-1,0,0,0,0,0,0,0,0,-8,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,5,0,0,0,0,0,0,0,0,0,0,2,0,0,0,0,0,0,0,14,0,14,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"h":[[0,0,0,1,1,0,0,0,0],[0,17,3,3,3,3,0,2,0]],"sol":[{"from":-1,"to":37,"piece":3,"promote":false,"owner":1},{"from":18,"to":19,"piece":8,"promote":false,"owner":-1},{"from":37,"to":20,"piece":3,"promote":true,"owner":1},{"from":19,"to":18,"piece":8,"promote":false,"owner":-1},{"from":-1,"to":10,"piece":4,"promote":false,"owner":1}]},{"n":93,"moves":5,"b":[0,-3,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,-8,0,-4,0,0,0,0,0,-2,0,0,5,0,0,0,0,12,0,0,0,0,0,0,0,0,0,0,0,15,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"h":[[0,0,0,0,1,1,0,0,0],[0,17,3,3,1,2,2,1,0]],"sol":[{"from":48,"to":21,"piece":7,"promote":false,"owner":1},{"from":20,"to":10,"piece":8,"promote":false,"owner":-1},{"from":-1,"to":2,"piece":4,"promote":false,"owner":1},{"from":10,"to":9,"piece":8,"promote":false,"owner":-1},{"from":-1,"to":10,"piece":5,"promote":false,"owner":1}]},{"n":94,"moves":5,"b":[0,0,-5,0,0,0,0,0,0,0,0,0,5,0,0,0,0,0,0,0,0,0,-8,0,0,0,0,0,0,1,0,0,0,5,0,0,0,0,5,0,0,0,0,0,0,0,0,7,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"h":[[0,0,0,0,1,0,1,0,0],[0,17,4,4,3,0,1,1,0]],"sol":[{"from":-1,"to":32,"piece":6,"promote":false,"owner":1},{"from":22,"to":31,"piece":8,"promote":false,"owner":-1},{"from":-1,"to":21,"piece":4,"promote":false,"owner":1},{"from":31,"to":41,"piece":8,"promote":false,"owner":-1},{"from":33,"to":42,"piece":5,"promote":false,"owner":1}]},{"n":95,"moves":5,"b":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,-4,0,0,0,0,0,3,0,-8,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,15,0,0,0,0,0,6,5,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"h":[[0,0,0,0,0,2,0,0,0],[0,18,4,3,3,1,1,1,0]],"sol":[{"from":42,"to":32,"piece":7,"promote":false,"owner":1},{"from":23,"to":13,"piece":8,"promote":false,"owner":-1},{"from":-1,"to":22,"piece":5,"promote":false,"owner":1},{"from":13,"to":3,"piece":8,"promote":false,"owner":-1},{"from":-1,"to":2,"piece":5,"promote":false,"owner":1}]},{"n":96,"moves":5,"b":[0,0,0,0,0,0,0,0,0,0,0,0,0,4,7,0,0,0,0,0,0,0,-8,0,-4,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,14,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,5,9,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"h":[[0,0,0,0,1,1,0,0,0],[0,17,4,4,1,2,1,1,0]],"sol":[{"from":41,"to":21,"piece":6,"promote":false,"owner":1},{"from":22,"to":14,"piece":8,"promote":false,"owner":-1},{"from":-1,"to":23,"piece":4,"promote":false,"owner":1},{"from":14,"to":6,"piece":8,"promote":false,"owner":-1},{"from":-1,"to":15,"piece":5,"promote":false,"owner":1}]},{"n":97,"moves":5,"b":[0,0,-8,-1,0,5,0,0,0,0,-4,-1,0,0,0,0,0,0,0,0,12,0,0,0,0,0,0,0,0,4,0,0,0,0,0,0,2,0,5,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"h":[[0,0,0,1,0,0,1,0,0],[0,16,3,3,1,2,1,2,0]],"sol":[{"from":-1,"to":19,"piece":3,"promote":false,"owner":1},{"from":10,"to":19,"piece":4,"promote":false,"owner":-1},{"from":-1,"to":10,"piece":6,"promote":false,"owner":1},{"from":2,"to":1,"piece":8,"promote":false,"owner":-1},{"from":36,"to":0,"piece":2,"promote":true,"owner":1}]},{"n":98,"moves":5,"b":[0,0,0,0,0,0,0,0,0,-1,0,0,0,0,0,0,0,0,-8,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,5,0,0,0,0,0,0,0,0,0,0,2,0,0,0,0,0,0,0,14,0,14,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"h":[[0,0,0,1,1,0,0,0,0],[0,17,3,3,3,3,0,2,0]],"sol":[{"from":-1,"to":37,"piece":3,"promote":false,"owner":1},{"from":18,"to":19,"piece":8,"promote":false,"owner":-1},{"from":37,"to":20,"piece":3,"promote":true,"owner":1},{"from":19,"to":18,"piece":8,"promote":false,"owner":-1},{"from":-1,"to":10,"piece":4,"promote":false,"owner":1}]},{"n":99,"moves":5,"b":[0,-3,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,-8,0,-4,0,0,0,0,0,-2,0,0,5,0,0,0,0,12,0,0,0,0,0,0,0,0,0,0,0,15,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"h":[[0,0,0,0,1,1,0,0,0],[0,17,3,3,1,2,2,1,0]],"sol":[{"from":48,"to":21,"piece":7,"promote":false,"owner":1},{"from":20,"to":10,"piece":8,"promote":false,"owner":-1},{"from":-1,"to":2,"piece":4,"promote":false,"owner":1},{"from":10,"to":9,"piece":8,"promote":false,"owner":-1},{"from":-1,"to":10,"piece":5,"promote":false,"owner":1}]},{"n":100,"moves":5,"b":[0,0,-5,0,0,0,0,0,0,0,0,0,5,0,0,0,0,0,0,0,0,0,-8,0,0,0,0,0,0,1,0,0,0,5,0,0,0,0,5,0,0,0,0,0,0,0,0,7,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"h":[[0,0,0,0,1,0,1,0,0],[0,17,4,4,3,0,1,1,0]],"sol":[{"from":-1,"to":32,"piece":6,"promote":false,"owner":1},{"from":22,"to":31,"piece":8,"promote":false,"owner":-1},{"from":-1,"to":21,"piece":4,"promote":false,"owner":1},{"from":31,"to":41,"piece":8,"promote":false,"owner":-1},{"from":33,"to":42,"piece":5,"promote":false,"owner":1}]}];
+
+</script>
+<script>
+const S = (() => {
+// ===== どばがき 将棋エンジン (詰将棋用) =====
+// 盤: 81マス, sq = r*9 + c  (r=0 が一段目=上, c=0 が9筋=左)
+// 先手(攻め方)=+ / 後手(玉方)=- , 上方向(r減少)が先手の前
+const P = 1, L = 2, N = 3, S = 4, G = 5, B = 6, R = 7, K = 8;
+const PR = 8; // 成駒 = type + 8
+const NAMES = { 1: '歩', 2: '香', 3: '桂', 4: '銀', 5: '金', 6: '角', 7: '飛', 8: '王', 9: 'と', 10: '杏', 11: '圭', 12: '全', 14: '馬', 15: '龍' };
+const MAXCOUNT = { 1: 18, 2: 4, 3: 4, 4: 4, 5: 4, 6: 2, 7: 2, 8: 2 };
+const KANJI_NUM = ['一', '二', '三', '四', '五', '六', '七', '八', '九'];
+
+const baseType = (pc) => { const t = Math.abs(pc); return t > 8 ? t - 8 : t; };
+const isPromoted = (pc) => Math.abs(pc) > 8;
+const owner = (pc) => (pc > 0 ? 1 : pc < 0 ? -1 : 0);
+const sqOf = (r, c) => r * 9 + c;
+const rowOf = (sq) => Math.floor(sq / 9);
+const colOf = (sq) => sq % 9;
+const canPromoteType = (t) => t >= 1 && t <= 7 && t !== 5;
+
+// 先手基準の駒の動き（後手は反転）
+const STEPS = {
+  1: [[-1, 0]],
+  3: [[-2, -1], [-2, 1]],
+  4: [[-1, -1], [-1, 0], [-1, 1], [1, -1], [1, 1]],
+  5: [[-1, -1], [-1, 0], [-1, 1], [0, -1], [0, 1], [1, 0]],
+  8: [[-1, -1], [-1, 0], [-1, 1], [0, -1], [0, 1], [1, -1], [1, 0], [1, 1]],
+  14: [[-1, 0], [1, 0], [0, -1], [0, 1]],
+  15: [[-1, -1], [-1, 1], [1, -1], [1, 1]],
+};
+const DIAG = [[-1, -1], [-1, 1], [1, -1], [1, 1]];
+const ORTHO = [[-1, 0], [1, 0], [0, -1], [0, 1]];
+const SLIDES = { 2: [[-1, 0]], 6: DIAG, 7: ORTHO, 14: DIAG, 15: ORTHO };
+
+function stepsFor(t) {
+  if (t === 9 || t === 10 || t === 11 || t === 12) return STEPS[5];
+  return STEPS[t] || [];
+}
+
+function newPosition() {
+  return { board: new Array(81).fill(0), hands: [new Array(9).fill(0), new Array(9).fill(0)] };
+}
+function clonePosition(pos) {
+  return { board: pos.board.slice(), hands: [pos.hands[0].slice(), pos.hands[1].slice()] };
+}
+const handIdx = (o) => (o === 1 ? 0 : 1);
+
+// 駒の利き先（空マス or 敵駒）
+function pieceTargets(board, from, pc) {
+  const o = owner(pc); const t = Math.abs(pc);
+  const r0 = rowOf(from), c0 = colOf(from);
+  const out = [];
+  for (const [dr, dc] of stepsFor(t)) {
+    const r = r0 + dr * o, c = c0 + dc * o; // 後手は反転
+    if (r < 0 || r > 8 || c < 0 || c > 8) continue;
+    const sq = sqOf(r, c);
+    if (owner(board[sq]) !== o) out.push(sq);
+  }
+  const sl = SLIDES[t];
+  if (sl) {
+    for (const [dr, dc] of sl) {
+      let r = r0 + dr * o, c = c0 + dc * o;
+      while (r >= 0 && r <= 8 && c >= 0 && c <= 8) {
+        const sq = sqOf(r, c);
+        const ow = owner(board[sq]);
+        if (ow === o) break;
+        out.push(sq);
+        if (ow !== 0) break;
+        r += dr * o; c += dc * o;
+      }
+    }
+  }
+  return out;
+}
+
+function findKing(pos, o) {
+  const target = o * K;
+  for (let i = 0; i < 81; i++) if (pos.board[i] === target) return i;
+  return -1;
+}
+
+function attackedBy(pos, sq, by) {
+  const b = pos.board;
+  for (let i = 0; i < 81; i++) {
+    const pc = b[i];
+    if (owner(pc) !== by) continue;
+    const ts = pieceTargets(b, i, pc);
+    for (let k = 0; k < ts.length; k++) if (ts[k] === sq) return true;
+  }
+  return false;
+}
+function attackers(pos, sq, by) {
+  const b = pos.board; const res = [];
+  for (let i = 0; i < 81; i++) {
+    const pc = b[i];
+    if (owner(pc) !== by) continue;
+    if (pieceTargets(b, i, pc).includes(sq)) res.push(i);
+  }
+  return res;
+}
+
+function inCheck(pos, o) {
+  const k = findKing(pos, o);
+  if (k < 0) return false;
+  return attackedBy(pos, k, -o);
+}
+
+const inZone = (sq, o) => (o === 1 ? rowOf(sq) <= 2 : rowOf(sq) >= 6);
+const lastRank = (sq, o) => (o === 1 ? rowOf(sq) === 0 : rowOf(sq) === 8);
+const last2Rank = (sq, o) => (o === 1 ? rowOf(sq) <= 1 : rowOf(sq) >= 7);
+
+function applyMove(pos, m) {
+  const np = clonePosition(pos);
+  const b = np.board;
+  if (m.from < 0) {
+    b[m.to] = m.owner * m.piece;
+    np.hands[handIdx(m.owner)][m.piece]--;
+  } else {
+    const pc = b[m.from];
+    const cap = b[m.to];
+    if (cap !== 0) np.hands[handIdx(m.owner)][baseType(cap)]++;
+    b[m.from] = 0;
+    b[m.to] = m.promote ? m.owner * (Math.abs(pc) + PR) : pc;
+  }
+  return np;
+}
+
+// 疑似合法手
+function pseudoMoves(pos, o) {
+  const b = pos.board; const moves = [];
+  for (let sq = 0; sq < 81; sq++) {
+    const pc = b[sq];
+    if (owner(pc) !== o) continue;
+    const bt = baseType(pc);
+    const ts = pieceTargets(b, sq, pc);
+    for (const t of ts) {
+      const canP = !isPromoted(pc) && canPromoteType(bt) && (inZone(sq, o) || inZone(t, o));
+      const mustP = ((bt === P || bt === L) && lastRank(t, o)) || (bt === N && last2Rank(t, o));
+      if (canP) moves.push({ from: sq, to: t, piece: bt, promote: true, owner: o, capture: b[t] });
+      if (!mustP) moves.push({ from: sq, to: t, piece: bt, promote: false, owner: o, capture: b[t] });
+    }
+  }
+  const hand = pos.hands[handIdx(o)];
+  // 二歩チェック用
+  const pawnCols = new Array(9).fill(false);
+  if (hand[P] > 0) for (let sq = 0; sq < 81; sq++) if (b[sq] === o * P) pawnCols[colOf(sq)] = true;
+  for (let t = 1; t <= 7; t++) {
+    if (hand[t] <= 0) continue;
+    for (let sq = 0; sq < 81; sq++) {
+      if (b[sq] !== 0) continue;
+      if (t === P && (pawnCols[colOf(sq)] || lastRank(sq, o))) continue;
+      if (t === L && lastRank(sq, o)) continue;
+      if (t === N && last2Rank(sq, o)) continue;
+      moves.push({ from: -1, to: sq, piece: t, promote: false, owner: o, capture: 0 });
+    }
+  }
+  return moves;
+}
+
+// 合法手 (onlyChecks: 王手になる手だけ)
+function legalMoves(pos, o, onlyChecks = false, checkUchifu = true) {
+  const res = [];
+  const kingSq = findKing(pos, o);
+  const inChk = kingSq >= 0 && attackedBy(pos, kingSq, -o);
+  let pseudo = pseudoMoves(pos, o);
+  // 王手されている時の合駒は間駒マスのみに絞る（高速化）
+  if (inChk) {
+    const atk = attackers(pos, kingSq, -o);
+    let between = null;
+    if (atk.length === 1) {
+      const a = atk[0];
+      const dr = Math.sign(rowOf(kingSq) - rowOf(a)), dc = Math.sign(colOf(kingSq) - colOf(a));
+      between = new Set();
+      let r = rowOf(a) + dr, c = colOf(a) + dc;
+      const isStraight = (rowOf(a) === rowOf(kingSq) || colOf(a) === colOf(kingSq) || Math.abs(rowOf(a) - rowOf(kingSq)) === Math.abs(colOf(a) - colOf(kingSq)));
+      if (isStraight) while (sqOf(r, c) !== kingSq && r >= 0 && r <= 8 && c >= 0 && c <= 8) { between.add(sqOf(r, c)); r += dr; c += dc; }
+    } else between = new Set();
+    pseudo = pseudo.filter(m => m.from >= 0 || between.has(m.to));
+  }
+  for (const m of pseudo) {
+    const np = applyMove(pos, m);
+    if (kingSq >= 0 || m.piece === K) { if (inCheck(np, o)) continue; }
+    const givesCheck = inCheck(np, -o);
+    if (onlyChecks && !givesCheck) continue;
+    m.check = givesCheck;
+    // 打ち歩詰め
+    if (checkUchifu && m.from < 0 && m.piece === P && givesCheck) {
+      const rep = legalMoves(np, -o, false, false);
+      if (rep.length === 0) continue;
+    }
+    res.push(m);
+  }
+  return res;
+}
+
+function isMate(pos, o) {
+  return inCheck(pos, o) && legalMoves(pos, o, false, false).length === 0;
+}
+
+// 詰将棋ソルバー: 先手番, depth手以内で詰む手順を返す (見つからなければ null)
+function solve(pos, depth, budget = { nodes: 0, limit: 400000 }) {
+  if (++budget.nodes > budget.limit) return null;
+  const checks = legalMoves(pos, 1, true);
+  // 並べ替え: 駒取り・成り・打ちを優先
+  checks.sort((a, b) => (Math.abs(b.capture) + (b.promote ? 1 : 0)) - (Math.abs(a.capture) + (a.promote ? 1 : 0)));
+  for (const m of checks) {
+    const p2 = applyMove(pos, m);
+    const replies = legalMoves(p2, -1, false, false);
+    if (replies.length === 0) return [m];
+    if (depth < 3) continue;
+    let ok = true, longest = null;
+    for (const r of replies) {
+      const p3 = applyMove(p2, r);
+      const line = solve(p3, depth - 2, budget);
+      if (!line) { ok = false; break; }
+      if (!longest || line.length > longest.line.length) longest = { r, line };
+    }
+    if (ok) return [m, longest.r, ...longest.line];
+  }
+  return null;
+}
+
+// 玉方の応手ごとに詰みが残るか判定。全応手で詰めば最善(最長)応手を返す
+function bestDefense(pos, remainingDepth) {
+  const replies = legalMoves(pos, -1, false, false);
+  if (replies.length === 0) return { mate: true };
+  let longest = null;
+  for (const r of replies) {
+    const p3 = applyMove(pos, r);
+    let line = null;
+    for (let d = 1; d <= remainingDepth; d += 2) { line = solve(p3, d); if (line) break; }
+    if (!line) return { mate: false, refute: r };
+    if (!longest || line.length > longest.line.length) longest = { r, line };
+  }
+  return { mate: false, ok: true, reply: longest.r, line: longest.line };
+}
+
+function moveToString(m) {
+  const file = 9 - colOf(m.to), rank = rowOf(m.to) + 1;
+  const name = NAMES[m.from >= 0 ? m.piece : m.piece] || '?';
+  return `${['','１','２','３','４','５','６','７','８','９'][file]}${KANJI_NUM[rank - 1]}${name}${m.promote ? '成' : ''}${m.from < 0 ? '打' : ''}`;
+}
+
+// シリアライズ: 盤面文字列
+function serialize(pos) {
+  return JSON.stringify({ b: pos.board, h: pos.hands });
+}
+function deserialize(str) {
+  const o = typeof str === 'string' ? JSON.parse(str) : str;
+  return { board: o.b.slice(), hands: [o.h[0].slice(), o.h[1].slice()] };
+}
+
+return { P, L, N, S, G, B, R, K, PR, NAMES, MAXCOUNT, KANJI_NUM, baseType, isPromoted, owner, sqOf, rowOf, colOf, canPromoteType, newPosition, clonePosition, handIdx, pieceTargets, findKing, attackedBy, attackers, inCheck, applyMove, legalMoves, isMate, solve, bestDefense, moveToString, serialize, deserialize };
+})();
+// ===== どばがき — 詰将棋１００連戦 =====
+const $ = (s) => document.querySelector(s);
+const PUZZLES = window.PUZZLES;
+const SAVE_KEY = 'dobagaki_save_v1';
+const matchBgm = $('#match-bgm');
+matchBgm.volume = .38;
+const victoryBgm = $('#victory-bgm');
+victoryBgm.volume = .55;
+let musicEnabled = true;
+let victoryPhase = false;
+function syncMatchMusic() {
+  const playing = $('#play-screen').classList.contains('active') && !document.hidden && musicEnabled && !victoryPhase;
+  if (playing) matchBgm.play().catch(() => {});
+  else matchBgm.pause();
+  if (victoryPhase && musicEnabled && !document.hidden) victoryBgm.play().catch(() => {});
+  else victoryBgm.pause();
+}
+$('#music-btn').addEventListener('click', () => {
+  musicEnabled = !musicEnabled;
+  $('#music-btn').textContent = musicEnabled ? '音楽 ON' : '音楽 OFF';
+  $('#music-btn').setAttribute('aria-pressed', String(musicEnabled));
+  syncMatchMusic();
+});
+document.addEventListener('visibilitychange', syncMatchMusic);
+
+// ---------- 状態 ----------
+const state = {
+  stage: 0, pos: null, puzzle: null, plies: 0, log: [],
+  selected: null, // {type:'board', sq} | {type:'hand', piece}
+  targets: [], busy: false, lastSq: -1,
+  tension: 0, combo: 0, gallery: [], miss: 0, hints: 0, startTime: 0, totalMiss: 0,
+};
+
+// ---------- サウンド (WebAudio) ----------
+const AudioFX = (() => {
+  let ctx;
+  const get = () => (ctx ||= new (window.AudioContext || window.webkitAudioContext)());
+  const tone = (f, t = .12, type = 'square', vol = .15, slide = 0) => {
+    try {
+      const c = get(); const o = c.createOscillator(); const g = c.createGain();
+      o.type = type; o.frequency.setValueAtTime(f, c.currentTime);
+      if (slide) o.frequency.exponentialRampToValueAtTime(Math.max(20, f + slide), c.currentTime + t);
+      g.gain.setValueAtTime(vol, c.currentTime); g.gain.exponentialRampToValueAtTime(.0001, c.currentTime + t);
+      o.connect(g).connect(c.destination); o.start(); o.stop(c.currentTime + t);
+    } catch (e) {}
+  };
+  const noise = (t = .15, vol = .3) => {
+    try {
+      const c = get(); const buf = c.createBuffer(1, c.sampleRate * t, c.sampleRate); const d = buf.getChannelData(0);
+      for (let i = 0; i < d.length; i++) d[i] = (Math.random() * 2 - 1) * (1 - i / d.length);
+      const src = c.createBufferSource(); src.buffer = buf; const g = c.createGain(); g.gain.value = vol;
+      const f = c.createBiquadFilter(); f.type = 'lowpass'; f.frequency.value = 1200;
+      src.connect(f).connect(g).connect(c.destination); src.start();
+    } catch (e) {}
+  };
+  return {
+    slam() { noise(.2, .65); tone(100, .2, 'sine', .42, -75); },
+    tenSeconds() { tone(660, .1, 'triangle', .14); setTimeout(() => tone(880, .13, 'triangle', .14), 140); },
+    check() { tone(880, .08, 'square', .12); setTimeout(() => tone(1320, .12, 'square', .12), 70); },
+    mate() { [0, 90, 180, 270, 400].forEach((d, i) => setTimeout(() => tone([523, 659, 784, 1047, 1568][i], .35, 'sawtooth', .18), d)); setTimeout(() => noise(.6, .5), 300); },
+    miss() { tone(300, .3, 'sawtooth', .2, -200); setTimeout(() => tone(200, .4, 'sawtooth', .2, -150), 150); },
+    select() { tone(1500, .05, 'triangle', .08); },
+    reply() { noise(.08, .25); tone(220, .1, 'sine', .3, -50); },
+    fanfare() { const seq = [523, 523, 523, 659, 784, 659, 784, 1047, 1319, 1568]; seq.forEach((f, i) => setTimeout(() => tone(f, .25, i > 6 ? 'sawtooth' : 'square', .15), i * 110)); },
+    cheer() { for (let i = 0; i < 6; i++) setTimeout(() => tone(600 + Math.random() * 900, .08, 'triangle', .06), i * 40); },
+  };
+})();
+
+// ---------- パーティクル ----------
+const FX = (() => {
+  const cv = $('#fx-canvas'); const ctx = cv.getContext('2d');
+  let parts = [];
+  const resize = () => { cv.width = innerWidth; cv.height = innerHeight; };
+  addEventListener('resize', resize); resize();
+  const COLORS = ['#ff1493', '#00fff7', '#b6ff00', '#ffd700', '#8a2be2', '#ffffff', '#ff00aa'];
+  function burst(x, y, n = 60, power = 12, kind = 'confetti') {
+    for (let i = 0; i < n; i++) {
+      const a = Math.random() * Math.PI * 2, sp = Math.random() * power + 2;
+      parts.push({ x, y, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp - 4, life: 1, decay: .008 + Math.random() * .015, size: 4 + Math.random() * 10, color: COLORS[i % COLORS.length], rot: Math.random() * 6, vr: (Math.random() - .5) * .4, kind, txt: kind === 'text' ? ['♰', '♥', '★', '✿', '☠', '♛'][i % 6] : '' });
+    }
+  }
+  function rain(n = 150) { for (let i = 0; i < n; i++) parts.push({ x: Math.random() * cv.width, y: -20 - Math.random() * cv.height, vx: (Math.random() - .5) * 2, vy: 3 + Math.random() * 6, life: 1, decay: .003, size: 6 + Math.random() * 10, color: COLORS[i % COLORS.length], rot: 0, vr: .2, kind: 'confetti' }); }
+  function loop() {
+    ctx.clearRect(0, 0, cv.width, cv.height);
+    parts = parts.filter(p => p.life > 0 && p.y < cv.height + 50);
+    for (const p of parts) {
+      p.x += p.vx; p.y += p.vy; p.vy += .25; p.vx *= .99; p.life -= p.decay; p.rot += p.vr;
+      ctx.save(); ctx.globalAlpha = Math.max(0, p.life); ctx.translate(p.x, p.y); ctx.rotate(p.rot);
+      ctx.fillStyle = p.color; ctx.shadowColor = p.color; ctx.shadowBlur = 12;
+      if (p.kind === 'text') { ctx.font = `${p.size * 2}px serif`; ctx.fillText(p.txt, 0, 0); }
+      else if (p.kind === 'spark') { ctx.beginPath(); ctx.arc(0, 0, p.size / 2, 0, 7); ctx.fill(); }
+      else ctx.fillRect(-p.size / 2, -p.size / 4, p.size, p.size / 2);
+      ctx.restore();
+    }
+    requestAnimationFrame(loop);
+  }
+  loop();
+  return { burst, rain };
+})();
+
+// ---------- 変なギャラリー ----------
+const GAL_COLORS = ['#fa75c8', '#91efff', '#d5a1ff', '#ffe37a', '#a8f3b1'];
+function galleryPortrait(i) {
+  const color = GAL_COLORS[i % GAL_COLORS.length];
+  const ears = i % 4 === 0 ? '<path d="M15 26 9 5 25 18M49 26 55 5 39 18" fill="#70306b" stroke="#190b24" stroke-width="3"/>' : '';
+  const hat = i % 4 === 1 ? '<path d="M11 20h42M20 20l4-15h16l4 15" fill="#24102f" stroke="#f8d779" stroke-width="3"/>' : '';
+  const horns = i % 4 === 2 ? '<path d="M18 24Q7 15 13 4M46 24Q57 15 51 4" fill="none" stroke="#f8d779" stroke-width="5"/>' : '';
+  const eyes = i % 3 === 0 ? '<circle cx="24" cy="29" r="4" fill="#201026"/><circle cx="40" cy="29" r="4" fill="#201026"/>' : '<path d="M18 29q6-5 12 0m4 0q6-5 12 0" fill="none" stroke="#201026" stroke-width="3"/>';
+  return `<svg viewBox="0 0 64 64" aria-hidden="true"><path d="M4 64Q6 48 23 47h18q17 1 19 17" fill="#4a174f" stroke="#f8d779" stroke-width="2"/>${ears}${horns}<ellipse cx="32" cy="31" rx="21" ry="23" fill="${color}" stroke="#201026" stroke-width="3"/>${hat}${eyes}<path d="M26 42q6 5 12 0" fill="none" stroke="#9d3262" stroke-width="2"/><circle cx="13" cy="37" r="3" fill="#fff1fa"/><circle cx="51" cy="37" r="3" fill="#fff1fa"/></svg>`;
+}
+const GAL_NAMES = ['タコ男爵', 'まばたき係', 'イカ夫人', 'シルクハット', '徘徊ゾンビ', 'ユニコーン先輩', 'カエル執事', 'よそ者', 'とろける人', 'キノコ卿', '吸血伯爵', 'ホネ', 'マトリョーシカ', 'ナメクジ姫', '目玉のお守り', '鏡の人', '仮面舞踏会', 'にわとり議長', 'ドクドク', 'クロワッサン', 'フラミンゴ嬢', 'おばけ子爵', 'ただの椅子', 'ろうそく', 'クマちゃん', 'フグ将軍', 'ばいきん', 'G', 'なると', 'トロル', 'ハムサ', 'ワニ紳士', 'ハリネズミ', 'あわあわ', 'カニ課長', '新月', 'クモ夫人', 'コウモリ男', 'かぼちゃ', 'ランプの精', '墓石さん', 'モアイ', 'カメ長老', 'インコ評論家', '脳', '鬼', 'ピエロ', 'ドラゴン', '白鳥', 'ハエ'];
+const GAL_SAYS = ['詰んだ！！', 'キャーーッ', '尊い…', 'それな', '鬼つよ', 'ウケる', 'えぐい', '天才か？', '歩が泣いてる', 'いいね', 'ぶち上げ', 'は？神', '飛車ぃぃ！', 'まだまだ', 'つよつよ', '推せる'];
+const galLayer = $('#gallery-layer');
+
+function addGallery(n = 1) {
+  for (let i = 0; i < n; i++) {
+    const idx = state.gallery.length;
+    const g = { id: idx, name: GAL_NAMES[idx % GAL_NAMES.length] + (idx >= GAL_NAMES.length ? Math.floor(idx / GAL_NAMES.length) + 1 : '') };
+    state.gallery.push(g);
+  }
+  renderGallery();
+}
+function renderGallery() {
+  galLayer.innerHTML = '';
+  state.gallery.forEach((g, i) => {
+    const el = document.createElement('div'); el.className = 'gal';
+    el.style.setProperty('--dur', (1.2 + ((i * 13) % 10) / 10) + 's');
+    el.style.animationDelay = -((i * 7) % 20) / 10 + 's';
+    el.innerHTML = `<div class="say"></div><div class="face">${galleryPortrait(g.id ?? i)}</div><div class="name">${g.name}</div>`;
+    galLayer.appendChild(el);
+  });
+  $('#gallery-count').textContent = state.gallery.length;
+}
+function galleryCheer(all = false) {
+  const els = [...galLayer.querySelectorAll('.gal')];
+  els.forEach((el, i) => {
+    if (all || Math.random() < .5) {
+      setTimeout(() => {
+        el.classList.remove('cheer'); void el.offsetWidth; el.classList.add('cheer');
+        const say = el.querySelector('.say'); say.textContent = GAL_SAYS[Math.floor(Math.random() * GAL_SAYS.length)]; say.classList.remove('pop'); void say.offsetWidth; say.classList.add('pop');
+      }, Math.random() * 600);
+    }
+  });
+  if (els.length) AudioFX.cheer();
+}
+addEventListener('resize', () => renderGallery());
+
+// ---------- 描画 ----------
+const boardEl = $('#board');
+function renderBoard() {
+  boardEl.innerHTML = '';
+  const pos = state.pos;
+  const kingSq = S.findKing(pos, -1);
+  const kingChecked = S.inCheck(pos, -1);
+  for (let sq = 0; sq < 81; sq++) {
+    const cell = document.createElement('div'); cell.className = 'cell'; cell.dataset.sq = sq;
+    const pc = pos.board[sq];
+    if (pc) {
+      const p = document.createElement('div');
+      const t = Math.abs(pc);
+      p.className = 'piece' + (pc < 0 ? ' white' : '') + (t > 8 ? ' promoted' : '') + (t === 8 ? ' king' : '');
+      p.textContent = t === 8 ? (pc < 0 ? '玉' : '王') : S.NAMES[t];
+      cell.appendChild(p);
+      if (pc > 0 && t !== 8) cell.classList.add('selectable');
+      if (sq === state.lastSq) { p.classList.add('slam'); }
+    }
+    if (sq === state.lastSq) cell.classList.add('last');
+    if (sq === kingSq && kingChecked) cell.classList.add('check-glow');
+    if (state.selected && state.selected.type === 'board' && state.selected.sq === sq) cell.classList.add('selected');
+    const tg = state.targets.find(m => m.to === sq);
+    if (tg) { cell.classList.add('target'); if (tg.capture) cell.classList.add('capture'); }
+    cell.addEventListener('click', () => onCellClick(sq));
+    boardEl.appendChild(cell);
+  }
+  renderHands();
+}
+function renderHands() {
+  for (const [id, o] of [['#hand-black', 1], ['#hand-white', -1]]) {
+    const wrap = document.querySelector(id + ' .hand-pieces'); wrap.innerHTML = '';
+    const hand = state.pos.hands[S.handIdx(o)];
+    const order = [7, 6, 5, 4, 3, 2, 1];
+    let any = false;
+    for (const t of order) {
+      if (o === -1) {
+        // 玉方持駒は「残り全部」なので 多い場合はまとめ表示
+        if (hand[t] <= 0) continue;
+      } else if (hand[t] <= 0) continue;
+      any = true;
+      const hp = document.createElement('div'); hp.className = 'hand-piece';
+      hp.innerHTML = `<div class="piece ${o === -1 ? 'white' : ''}">${S.NAMES[t]}</div>${hand[t] > 1 ? `<span class="cnt">${hand[t]}</span>` : ''}`;
+      if (o === 1) {
+        if (state.selected && state.selected.type === 'hand' && state.selected.piece === t) hp.classList.add('selected');
+        hp.addEventListener('click', () => onHandClick(t));
+      }
+      wrap.appendChild(hp);
+    }
+    if (!any) wrap.innerHTML = `<div style="opacity:.5;font-size:12px;text-align:center">${o === 1 ? 'なし' : '残り全部'}</div>`;
+  }
+}
+function renderHUD() {
+  $('#stage-no').textContent = state.stage + 1;
+  $('#stage-moves').textContent = `${state.puzzle.moves}手詰`;
+  $('#tension-fill').style.width = state.tension + '%';
+  $('#tension-val').textContent = state.tension + '%';
+  $('#combo').textContent = state.combo;
+  $('#move-log').innerHTML = state.log.map((s, i) => `<span class="${i % 2 ? 'w' : ''}">${i + 1}. ${s}</span>`).join('');
+  document.body.classList.toggle('hyper', state.tension >= 100);
+}
+
+// ---------- 演出 ----------
+function callout(text, cls = '') {
+  const el = $('#callout'); el.className = 'callout'; el.textContent = text; void el.offsetWidth; el.classList.add('show'); if (cls) el.classList.add(cls);
+}
+function banner(text) { const el = $('#stage-banner'); el.textContent = text; el.classList.remove('show'); void el.offsetWidth; el.classList.add('show'); }
+function flash() { const f = $('#flash'); f.classList.remove('on'); void f.offsetWidth; f.classList.add('on'); }
+function shake() { const t = $('#board-tilt'); t.classList.remove('shake'); void t.offsetWidth; t.classList.add('shake'); }
+function cellCenter(sq) { const c = boardEl.children[sq]; if (!c) return { x: innerWidth / 2, y: innerHeight / 2 }; const r = c.getBoundingClientRect(); return { x: r.left + r.width / 2, y: r.top + r.height / 2 }; }
+
+// ---------- ゲーム進行 ----------
+function loadStage(n) {
+  victoryPhase = false;
+  victoryBgm.pause(); victoryBgm.currentTime = 0;
+  state.stage = n; state.puzzle = PUZZLES[n];
+  state.stageStartedAt = Date.now(); state.tenSecondCue = false;
+  state.pos = S.deserialize({ b: state.puzzle.b, h: state.puzzle.h });
+  state.plies = 0; state.log = []; state.selected = null; state.targets = []; state.lastSq = -1; state.busy = false; state.miss = 0;
+  renderBoard(); renderHUD();
+  banner(`第${n + 1}局　${state.puzzle.moves}手詰`);
+  $('#board-tilt').style.transform = 'none';
+  syncMatchMusic();
+  save();
+}
+setInterval(() => {
+  if (!$('#play-screen').classList.contains('active') || !state.puzzle || state.busy) return;
+  const seconds = Math.floor((Date.now() - state.stageStartedAt) / 1000);
+  $('#elapsed').textContent = seconds < 10 ? `${seconds}秒` : `${seconds}秒経過`;
+  if (seconds >= 10 && !state.tenSecondCue) { state.tenSecondCue = true; AudioFX.tenSeconds(); }
+}, 250);
+function clearSelection() { state.selected = null; state.targets = []; }
+
+function onHandClick(t) {
+  if (state.busy) return;
+  AudioFX.select();
+  if (state.selected && state.selected.type === 'hand' && state.selected.piece === t) { clearSelection(); renderBoard(); return; }
+  state.selected = { type: 'hand', piece: t };
+  const all = S.legalMoves(state.pos, 1, false);
+  state.targets = all.filter(m => m.from < 0 && m.piece === t);
+  renderBoard();
+}
+function onCellClick(sq) {
+  if (state.busy) return;
+  const pc = state.pos.board[sq];
+  const tg = state.targets.filter(m => m.to === sq);
+  if (state.selected && tg.length) { commitMove(tg); return; }
+  if (pc > 0 && Math.abs(pc) !== 8) {
+    AudioFX.select();
+    if (state.selected && state.selected.type === 'board' && state.selected.sq === sq) { clearSelection(); renderBoard(); return; }
+    state.selected = { type: 'board', sq };
+    const all = S.legalMoves(state.pos, 1, false);
+    state.targets = all.filter(m => m.from === sq);
+    renderBoard(); return;
+  }
+  clearSelection(); renderBoard();
+}
+
+async function commitMove(cands) {
+  let m = cands[0];
+  if (cands.length > 1) {
+    const yes = await askPromote();
+    m = cands.find(c => c.promote === yes) || cands[0];
+  }
+  clearSelection();
+  state.busy = true;
+  if (!m.check) {
+    // 王手じゃない → 却下
+    AudioFX.miss(); shake(); callout('王手じゃない！', 'w');
+    state.busy = false; renderBoard(); return;
+  }
+  const remaining = state.puzzle.moves - state.plies; // この手を含めた残り手数
+  const cap = state.pos.board[m.to];
+  if (cap) { const pEl = boardEl.children[m.to].querySelector('.piece'); if (pEl) pEl.classList.add('dying'); }
+  await sleep(cap ? 220 : 0);
+  const np = S.applyMove(state.pos, m);
+  state.pos = np; state.lastSq = m.to; state.plies++; state.log.push('▲' + S.moveToString(m));
+  renderBoard(); renderHUD();
+  AudioFX.slam(); shake();
+  const c = cellCenter(m.to); FX.burst(c.x, c.y, 40, 10, 'spark');
+  // 詰み判定
+  if (S.isMate(np, -1)) { await onMate(); return; }
+  callout('王手！！'); AudioFX.check();
+  // 玉方の応手 (最善=最長)
+  await sleep(500);
+  const def = S.bestDefense(np, remaining - 1);
+  if (!def.ok) {
+    // 詰まない → 逃れ / 手数オーバー
+    const r = def.refute || S.legalMoves(np, -1, false, false)[0];
+    if (r) {
+      state.pos = S.applyMove(np, r); state.lastSq = r.to; state.log.push('△' + S.moveToString(r));
+      renderBoard(); renderHUD(); AudioFX.reply();
+      await sleep(600);
+    }
+    await onMiss(remaining <= 1 ? '手数オーバー…' : '逃れられた…');
+    return;
+  }
+  const r = def.reply;
+  await sleep(150);
+  const capW = np.board[r.to];
+  if (capW) { const pEl = boardEl.children[r.to].querySelector('.piece'); if (pEl) pEl.classList.add('dying'); await sleep(220); }
+  state.pos = S.applyMove(np, r); state.lastSq = r.to; state.plies++; state.log.push('△' + S.moveToString(r));
+  renderBoard(); renderHUD(); AudioFX.reply();
+  const cw = cellCenter(r.to); FX.burst(cw.x, cw.y, 14, 5, 'spark');
+  callout(['ぬるり', 'すっ…', 'ふふ', 'まだまだ', 'ひらり', 'ぬけた', 'ここよ'][Math.floor(Math.random() * 7)], 'w');
+  state.busy = false;
+}
+
+async function onMiss(text) {
+  state.miss++; state.totalMiss++; state.combo = 0;
+  state.tension = Math.max(0, state.tension - 15);
+  AudioFX.miss(); document.body.classList.add('invert'); setTimeout(() => document.body.classList.remove('invert'), 700);
+  callout(text, 'w'); renderHUD();
+  await sleep(1200);
+  // 局面リセット
+  const p = state.puzzle;
+  state.pos = S.deserialize({ b: p.b, h: p.h }); state.plies = 0; state.log = []; state.lastSq = -1;
+  renderBoard(); renderHUD(); state.busy = false;
+}
+
+async function onMate() {
+  victoryPhase = true;
+  victoryBgm.currentTime = 0;
+  syncMatchMusic();
+  state.combo++;
+  const gain = 8 + state.puzzle.moves * 2 + Math.min(state.combo, 10);
+  state.tension = Math.min(100, state.tension + gain);
+  renderHUD();
+  flash();
+  callout('詰み！！！', 'mate');
+  const k = S.findKing(state.pos, -1); const c = cellCenter(k);
+  FX.burst(c.x, c.y, 160, 22, 'confetti'); FX.burst(c.x, c.y, 60, 16, 'text');
+  setTimeout(() => FX.rain(120 + state.tension), 300);
+  document.body.classList.add('invert'); setTimeout(() => document.body.classList.remove('invert'), 700);
+  $('#board-tilt').style.transform = 'rotateX(60deg) rotateZ(360deg) scale(1.1)';
+  // ギャラリー追加: 勝つたび 1〜3人 (テンション高いと増える)
+  const add = 1 + (state.combo % 3 === 0 ? 1 : 0) + (state.tension >= 100 ? 1 : 0);
+  await sleep(900);
+  addGallery(add); galleryCheer(true);
+  await sleep(1400);
+  if (state.stage + 1 >= PUZZLES.length) { showEnding(); return; }
+  loadStage(state.stage + 1);
+}
+
+function askPromote() {
+  return new Promise(res => {
+    const d = $('#promote-dialog'); d.hidden = false;
+    const done = (v) => { d.hidden = true; $('#promote-yes').onclick = $('#promote-no').onclick = null; res(v); };
+    $('#promote-yes').onclick = () => done(true); $('#promote-no').onclick = () => done(false);
+  });
+}
+const sleep = (ms) => new Promise(r => setTimeout(r, ms));
+
+// ---------- ヒント / やり直し ----------
+$('#hint-btn').addEventListener('click', () => {
+  if (state.busy) return;
+  // 現局面から解を探す
+  const rem = state.puzzle.moves - state.plies;
+  let line = null; for (let d = 1; d <= rem; d += 2) { line = S.solve(state.pos, d); if (line) break; }
+  if (!line) { callout('リセットして', 'w'); return; }
+  state.hints++; state.tension = Math.max(0, state.tension - 5); renderHUD();
+  const m = line[0];
+  clearSelection();
+  if (m.from >= 0) { state.selected = { type: 'board', sq: m.from }; state.targets = [m]; }
+  else { state.selected = { type: 'hand', piece: m.piece }; state.targets = [m]; }
+  renderBoard(); callout('ここ！', 'w'); AudioFX.select();
+});
+$('#reset-btn').addEventListener('click', () => { if (state.busy) return; const p = state.puzzle; state.pos = S.deserialize({ b: p.b, h: p.h }); state.plies = 0; state.log = []; state.lastSq = -1; clearSelection(); renderBoard(); renderHUD(); });
+
+// ---------- セーブ ----------
+function save() { try { localStorage.setItem(SAVE_KEY, JSON.stringify({ stage: state.stage, tension: state.tension, combo: state.combo, gallery: state.gallery.length, totalMiss: state.totalMiss, hints: state.hints, startTime: state.startTime })); } catch (e) {} }
+function load() { try { return JSON.parse(localStorage.getItem(SAVE_KEY)); } catch (e) { return null; } }
+
+// ---------- 画面遷移 ----------
+function show(id) { document.querySelectorAll('.screen').forEach(s => s.classList.remove('active')); $(id).classList.add('active'); syncMatchMusic(); }
+function startGame(fromSave) {
+  const sv = fromSave ? load() : null;
+  state.gallery = []; state.tension = sv?.tension || 0; state.combo = sv?.combo || 0; state.totalMiss = sv?.totalMiss || 0; state.hints = sv?.hints || 0; state.startTime = sv?.startTime || Date.now();
+  if (sv?.gallery) addGallery(sv.gallery); else renderGallery();
+  show('#play-screen');
+  loadStage(sv?.stage || 0);
+  AudioFX.fanfare();
+}
+$('#start-btn').addEventListener('click', () => { localStorage.removeItem(SAVE_KEY); startGame(false); });
+$('#continue-btn').addEventListener('click', () => startGame(true));
+$('#again-btn').addEventListener('click', () => { localStorage.removeItem(SAVE_KEY); show('#title-screen'); location.reload(); });
+
+function showEnding() {
+  localStorage.removeItem(SAVE_KEY);
+  show('#ending-screen');
+  document.body.classList.add('hyper');
+  const mins = Math.max(1, Math.round((Date.now() - state.startTime) / 60000));
+  $('#ending-stats').innerHTML = `<div>ギャラリー <b>${state.gallery.length}</b> 匹</div><div>ミス <b>${state.totalMiss}</b> 回</div><div>ヒント <b>${state.hints}</b> 回</div><div>所要 <b>${mins}</b> 分</div>`;
+  $('#ending-credits').innerHTML = `♰ Cast ♰<br>${state.gallery.slice(0, 12).map(g => g.name).join(' / ')}${state.gallery.length > 12 ? ' / ...and more' : ''}<br><br>♰ Thank you for playing ♰<br>Tsume-Shogi Carnival`;
+  const parade = $('#ending-parade'); parade.innerHTML = '';
+  state.gallery.forEach((g, i) => {
+    const el = document.createElement('div'); el.className = 'gal';
+    el.style.top = (5 + (i * 37) % 90) + '%'; el.style.left = '0';
+    el.style.setProperty('--dur', (5 + (i * 13) % 8) + 's'); el.style.animationDelay = -((i * 11) % 80) / 10 + 's';
+    el.style.setProperty('--size', (40 + (i * 17) % 40) + 'px');
+    el.innerHTML = `<div class="face">${galleryPortrait(g.id ?? i)}</div><div class="name">${g.name}</div>`;
+    parade.appendChild(el);
+  });
+  syncMatchMusic();
+  let k = 0; const iv = setInterval(() => { FX.burst(Math.random() * innerWidth, Math.random() * innerHeight * .8, 80, 14, k % 2 ? 'text' : 'confetti'); if (++k > 40) clearInterval(iv); }, 350);
+  FX.rain(400);
+}
+
+// ---------- 初期化 ----------
+(function init() {
+  const sv = load();
+  if (sv && sv.stage > 0) { $('#continue-btn').hidden = false; $('#continue-no').textContent = sv.stage + 1; }
+  // タイトル背景の紙吹雪
+  setInterval(() => { if ($('#title-screen').classList.contains('active')) FX.burst(Math.random() * innerWidth, Math.random() * innerHeight, 12, 6, Math.random() < .3 ? 'text' : 'confetti'); }, 700);
+  // デバッグ用: ?stage=N
+  const q = new URLSearchParams(location.search); if (q.get('stage')) { startGame(false); loadStage(Math.min(99, Math.max(0, Number(q.get('stage')) - 1))); }
+})();
+
+</script>
+<script type="module" src="https://static.cloudflareinsights.com/beacon.min.js/v31edd6df95cf4e85bb4c19e7a9bdbcba1788362987495" integrity="sha512-iIg7k2xntmwu6/uSb5tpc/hySgZc4eoL31yB29W6tJFo2akwjPWcEqnCEdJvGexCL0KEQwVYv5BlowfhVz26hg==" data-cf-beacon='{"version":"2024.11.0","token":"4edd5f8ec12a48cfa682ab8261b80a79","spa":2}' crossorigin="anonymous"></script>
+</body>
+</html>
